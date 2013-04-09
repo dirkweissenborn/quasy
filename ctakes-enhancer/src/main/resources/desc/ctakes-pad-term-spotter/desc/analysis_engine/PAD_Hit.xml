@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<taeDescription xmlns="http://uima.apache.org/resourceSpecifier">
+<frameworkImplementation>org.apache.uima.java</frameworkImplementation>
+<primitive>true</primitive>
+<annotatorImplementationName>org.apache.ctakes.padtermspotter.ae.PADHitAnnotator</annotatorImplementationName>
+<analysisEngineMetaData>
+<name>PAD_Hit</name>
+<description>Uses PADTerm and PADLocation annotation to create a PADHit.</description>
+<version>1.0</version>
+<vendor>Mayo Clinic</vendor>
+<configurationParameters>
+<configurationParameter>
+<name>DISTANCE</name>
+<description>Specifies the number of annotations (of type specified in ANNOTATION_TYPE parameter) to define a text span that can contain the NEs that would comprise a hit</description>
+<type>String</type>
+<multiValued>false</multiValued>
+<mandatory>true</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>DISTANCE_ANN_TYPE</name>
+<description>Specifies the annotation type that is used to define window(text span)</description>
+<type>String</type>
+<multiValued>false</multiValued>
+<mandatory>true</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>ANNOTATION_PART_ONE_OF_PAIR</name>
+<description>Defines one of the annotations that make a pair to be considered as a hit - unless the dictionary hit is defined as standalone</description>
+<type>String</type>
+<multiValued>false</multiValued>
+<mandatory>true</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>ANNOTATION_PART_TWO_OF_PAIR</name>
+<description>Defines one of the annotations that make a pair to be considered as a hit - unless the dictionary hit is defined as standalone</description>
+<type>String</type>
+<multiValued>false</multiValued>
+<mandatory>true</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>BOUNDARY_ANN_TYPE</name>
+<description>Identifies the annotation type that defines boundary across which annotations cannot be paired. An example for boundary annotation type could be Segment.</description>
+<type>String</type>
+<multiValued>false</multiValued>
+<mandatory>true</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>BACKUP_BOUNDARY_ANN_TYPE</name>
+<description>This annotation type should either be Segment annotatation, Document or any other enclosing annotation type that will be used in case the annotation specified in BOUNDARY_ANN_TYPE is not present, by default this uses segment annotation.</description>
+<type>String</type>
+<multiValued>false</multiValued>
+<mandatory>true</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>ANNOTATION_PART_ONE_FILTEROUT_NEGATED</name>
+<description>Specifies whether the AE should filter out dictionary hits before considering for pairing. Default value is true - to filter out negated</description>
+<type>Boolean</type>
+<multiValued>false</multiValued>
+<mandatory>false</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>ANNOTATION_PART_TWO_FILTEROUT_NEGATED</name>
+<description>Specifies whether the AE should filter out dictionary hits before considering for pairing. Default value is true - to filter out negated</description>
+<type>Boolean</type>
+<multiValued>false</multiValued>
+<mandatory>false</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>ANN_PART_ONE_TYPES_TO_IGNORE</name>
+<description>type ids to be ignored from being considered</description>
+<type>Integer</type>
+<multiValued>true</multiValued>
+<mandatory>false</mandatory>
+</configurationParameter>
+<configurationParameter>
+<name>ANN_PART_TWO_TYPES_TO_IGNORE</name>
+<description>type ids (as specified in the csv dictionary) to be ignored from bing marked as hits.</description>
+<type>Integer</type>
+<multiValued>true</multiValued>
+<mandatory>false</mandatory>
+</configurationParameter>
+</configurationParameters>
+<configurationParameterSettings>
+<nameValuePair>
+<name>ANNOTATION_PART_ONE_OF_PAIR</name>
+<value>
+<string>org.apache.ctakes.padtermspotter.type.PADTerm</string>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>ANNOTATION_PART_TWO_OF_PAIR</name>
+<value>
+<string>org.apache.ctakes.padtermspotter.type.PADLocation</string>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>DISTANCE</name>
+<value>
+<string>2</string>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>DISTANCE_ANN_TYPE</name>
+<value>
+<string>org.apache.ctakes.typesystem.type.textspan.Sentence</string>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>BOUNDARY_ANN_TYPE</name>
+<value>
+<string>org.apache.ctakes.padtermspotter.type.SubSection</string>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>BACKUP_BOUNDARY_ANN_TYPE</name>
+<value>
+<string>org.apache.ctakes.typesystem.type.textspan.Segment</string>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>ANNOTATION_PART_ONE_FILTEROUT_NEGATED</name>
+<value>
+<boolean>false</boolean>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>ANNOTATION_PART_TWO_FILTEROUT_NEGATED</name>
+<value>
+<boolean>false</boolean>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>ANN_PART_ONE_TYPES_TO_IGNORE</name>
+<value>
+<array/>
+</value>
+</nameValuePair>
+<nameValuePair>
+<name>ANN_PART_TWO_TYPES_TO_IGNORE</name>
+<value>
+<array/>
+</value>
+</nameValuePair>
+</configurationParameterSettings>
+<typeSystemDescription/>
+<capabilities>
+<capability>
+<inputs/>
+<outputs/>
+<languagesSupported/>
+</capability>
+</capabilities>
+<operationalProperties>
+<modifiesCas>true</modifiesCas>
+<multipleDeploymentAllowed>true</multipleDeploymentAllowed>
+<outputsNewCASes>false</outputsNewCASes>
+</operationalProperties>
+</analysisEngineMetaData>
+<externalResourceDependencies>
+<externalResourceDependency>
+<key>StopWordsFile</key>
+<description></description>
+<interfaceName>org.apache.ctakes.core.resource.FileResource</interfaceName>
+<optional>false</optional>
+</externalResourceDependency>
+</externalResourceDependencies>
+<resourceManagerConfiguration>
+<externalResources>
+<externalResource>
+<name>StopWordsFileResource</name>
+<description></description>
+<fileResourceSpecifier>
+<fileUrl>file:org/apache/ctakes/padtermspotter/lookup/radiology/StopWords.txt</fileUrl>
+</fileResourceSpecifier>
+<implementationName>org.apache.ctakes.core.resource.FileResourceImpl</implementationName>
+</externalResource>
+</externalResources>
+<externalResourceBindings>
+<externalResourceBinding>
+<key>StopWordsFile</key>
+<resourceName>StopWordsFileResource</resourceName>
+</externalResourceBinding>
+</externalResourceBindings>
+</resourceManagerConfiguration>
+</taeDescription>

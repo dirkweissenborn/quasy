@@ -1,0 +1,473 @@
+<de.tu.dresden.quasy.model.Text>
+  <text>What is the role of thyroid hormones administration in the treatment of heart failure?</text>
+  <annotations class="scala.collection.mutable.HashMap">
+    <Chunks class="de.tu.dresden.quasy.model.annotation.Chunk">
+      <Chunk start="0" end="4" coveredText="What">
+        <context reference="../../../.."/>
+        <chunkType>NP</chunkType>
+      </Chunk>
+      <Chunk start="5" end="7" coveredText="is">
+        <context reference="../../../.."/>
+        <chunkType>VP</chunkType>
+      </Chunk>
+      <Chunk start="8" end="85" coveredText="the role of thyroid hormones administration in the treatment of heart failure">
+        <context reference="../../../.."/>
+        <chunkType>NP</chunkType>
+      </Chunk>
+      <Chunk start="17" end="19" coveredText="of">
+        <context reference="../../../.."/>
+        <chunkType>PP</chunkType>
+      </Chunk>
+      <Chunk start="20" end="51" coveredText="thyroid hormones administration">
+        <context reference="../../../.."/>
+        <chunkType>NP</chunkType>
+      </Chunk>
+      <Chunk start="52" end="54" coveredText="in">
+        <context reference="../../../.."/>
+        <chunkType>PP</chunkType>
+      </Chunk>
+      <Chunk start="55" end="68" coveredText="the treatment">
+        <context reference="../../../.."/>
+        <chunkType>NP</chunkType>
+      </Chunk>
+      <Chunk start="69" end="71" coveredText="of">
+        <context reference="../../../.."/>
+        <chunkType>PP</chunkType>
+      </Chunk>
+      <Chunk start="72" end="85" coveredText="heart failure">
+        <context reference="../../../.."/>
+        <chunkType>NP</chunkType>
+      </Chunk>
+    </Chunks>
+    <Tokens class="de.tu.dresden.quasy.model.annotation.Token">
+      <Token start="0" end="4" coveredText="What">
+        <context reference="../../../.."/>
+        <position>1</position>
+        <depTag>
+          <tag>SBJ</tag>
+          <dependsOn>2</dependsOn>
+        </depTag>
+        <lemma>what</lemma>
+        <posTag>WP</posTag>
+        <srls class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.SemanticRoleLabel>
+            <head>2</head>
+            <label>R-A1</label>
+          </de.tu.dresden.quasy.model.annotation.SemanticRoleLabel>
+        </srls>
+      </Token>
+      <Token start="5" end="7" coveredText="is">
+        <context reference="../../../.."/>
+        <position>2</position>
+        <depTag>
+          <tag>ROOT</tag>
+          <dependsOn>0</dependsOn>
+        </depTag>
+        <lemma>be</lemma>
+        <posTag>VBZ</posTag>
+        <srls class="scala.collection.immutable.Nil$"/>
+      </Token>
+      <Token start="8" end="11" coveredText="the">
+        <context reference="../../../.."/>
+        <position>3</position>
+        <depTag>
+          <tag>NMOD</tag>
+          <dependsOn>4</dependsOn>
+        </depTag>
+        <lemma>the</lemma>
+        <posTag>DT</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="12" end="16" coveredText="role">
+        <context reference="../../../.."/>
+        <position>4</position>
+        <depTag>
+          <tag>PRD</tag>
+          <dependsOn>2</dependsOn>
+        </depTag>
+        <lemma>role</lemma>
+        <posTag>NN</posTag>
+        <srls class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.SemanticRoleLabel>
+            <head>2</head>
+            <label>A1</label>
+          </de.tu.dresden.quasy.model.annotation.SemanticRoleLabel>
+        </srls>
+      </Token>
+      <Token start="17" end="19" coveredText="of">
+        <context reference="../../../.."/>
+        <position>5</position>
+        <depTag>
+          <tag>NMOD</tag>
+          <dependsOn>4</dependsOn>
+        </depTag>
+        <lemma>of</lemma>
+        <posTag>IN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="20" end="27" coveredText="thyroid">
+        <context reference="../../../.."/>
+        <position>6</position>
+        <depTag>
+          <tag>NMOD</tag>
+          <dependsOn>7</dependsOn>
+        </depTag>
+        <lemma>thyroid</lemma>
+        <posTag>NN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="28" end="36" coveredText="hormones">
+        <context reference="../../../.."/>
+        <position>7</position>
+        <depTag>
+          <tag>PMOD</tag>
+          <dependsOn>5</dependsOn>
+        </depTag>
+        <lemma>hormone</lemma>
+        <posTag>NNS</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="37" end="51" coveredText="administration">
+        <context reference="../../../.."/>
+        <position>8</position>
+        <depTag>
+          <tag>PMOD</tag>
+          <dependsOn>5</dependsOn>
+        </depTag>
+        <lemma>administration</lemma>
+        <posTag>NN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="52" end="54" coveredText="in">
+        <context reference="../../../.."/>
+        <position>9</position>
+        <depTag>
+          <tag>LOC</tag>
+          <dependsOn>7</dependsOn>
+        </depTag>
+        <lemma>in</lemma>
+        <posTag>IN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="55" end="58" coveredText="the">
+        <context reference="../../../.."/>
+        <position>10</position>
+        <depTag>
+          <tag>NMOD</tag>
+          <dependsOn>11</dependsOn>
+        </depTag>
+        <lemma>the</lemma>
+        <posTag>DT</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="59" end="68" coveredText="treatment">
+        <context reference="../../../.."/>
+        <position>11</position>
+        <depTag>
+          <tag>PMOD</tag>
+          <dependsOn>9</dependsOn>
+        </depTag>
+        <lemma>treatment</lemma>
+        <posTag>NN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="69" end="71" coveredText="of">
+        <context reference="../../../.."/>
+        <position>12</position>
+        <depTag>
+          <tag>NMOD</tag>
+          <dependsOn>11</dependsOn>
+        </depTag>
+        <lemma>of</lemma>
+        <posTag>IN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="72" end="77" coveredText="heart">
+        <context reference="../../../.."/>
+        <position>13</position>
+        <depTag>
+          <tag>NMOD</tag>
+          <dependsOn>14</dependsOn>
+        </depTag>
+        <lemma>heart</lemma>
+        <posTag>NN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="78" end="85" coveredText="failure">
+        <context reference="../../../.."/>
+        <position>14</position>
+        <depTag>
+          <tag>PMOD</tag>
+          <dependsOn>12</dependsOn>
+        </depTag>
+        <lemma>failure</lemma>
+        <posTag>NN</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+      <Token start="85" end="86" coveredText="?">
+        <context reference="../../../.."/>
+        <position>15</position>
+        <depTag>
+          <tag>P</tag>
+          <dependsOn>2</dependsOn>
+        </depTag>
+        <lemma>?</lemma>
+        <posTag>.</posTag>
+        <srls class="scala.collection.immutable.Nil$" reference="../../Token[2]/srls"/>
+      </Token>
+    </Tokens>
+    <Concepts class="de.tu.dresden.quasy.model.annotation.Concept">
+      <Concept start="20" end="27" coveredText="thyroid">
+        <context reference="../../../.."/>
+      </Concept>
+      <Concept start="28" end="68" coveredText="hormones administration in the treatment">
+        <context reference="../../../.."/>
+        <conceptType>TEST</conceptType>
+      </Concept>
+      <Concept start="37" end="51" coveredText="administration">
+        <context reference="../../../.."/>
+      </Concept>
+      <Concept start="37" end="51" coveredText="administration">
+        <context reference="../../../.."/>
+        <conceptType>TEST</conceptType>
+      </Concept>
+      <Concept start="59" end="68" coveredText="treatment">
+        <context reference="../../../.."/>
+        <conceptType>TEST</conceptType>
+      </Concept>
+      <Concept start="72" end="85" coveredText="heart failure">
+        <context reference="../../../.."/>
+        <conceptType>PROBLEM</conceptType>
+      </Concept>
+      <Concept start="72" end="77" coveredText="heart">
+        <context reference="../../../.."/>
+      </Concept>
+    </Concepts>
+    <Sentences class="de.tu.dresden.quasy.model.annotation.Sentence">
+      <Sentence start="0" end="86" coveredText="What is the role of thyroid hormones administration in the treatment of heart failure?">
+        <context reference="../../../.."/>
+      </Sentence>
+    </Sentences>
+    <NamedEntityMentions class="de.tu.dresden.quasy.model.annotation.NamedEntityMention">
+      <NamedEntityMention start="20" end="27" coveredText="thyroid">
+        <context reference="../../../.."/>
+        <ontologyConcepts class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>69748006</conceptId>
+            <semanticType>T023</semanticType>
+            <cui>C0040132</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+        </ontologyConcepts>
+        <generic>true</generic>
+        <conditional>false</conditional>
+        <polarity>1</polarity>
+      </NamedEntityMention>
+      <NamedEntityMention start="28" end="68" coveredText="hormones administration in the treatment">
+        <context reference="../../../.."/>
+        <ontologyConcepts class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>243122007</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0279025</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>169413002</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0279025</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>146639002</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0279025</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>309542002</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0279025</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+        </ontologyConcepts>
+        <generic>false</generic>
+        <conditional>false</conditional>
+        <polarity>1</polarity>
+      </NamedEntityMention>
+      <NamedEntityMention start="37" end="51" coveredText="administration">
+        <context reference="../../../.."/>
+        <ontologyConcepts class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>184046009</conceptId>
+            <semanticType>T057</semanticType>
+            <cui>C0001554</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>154259002</conceptId>
+            <semanticType>T057</semanticType>
+            <cui>C0001554</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>152269009</conceptId>
+            <semanticType>T057</semanticType>
+            <cui>C0001554</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>413454004</conceptId>
+            <semanticType>T057</semanticType>
+            <cui>C0001554</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+        </ontologyConcepts>
+        <generic>false</generic>
+        <conditional>false</conditional>
+        <polarity>1</polarity>
+      </NamedEntityMention>
+      <NamedEntityMention start="37" end="51" coveredText="administration">
+        <context reference="../../../.."/>
+        <ontologyConcepts class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>108234007</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C1533734</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>416118004</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C1533734</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+        </ontologyConcepts>
+        <generic>false</generic>
+        <conditional>false</conditional>
+        <polarity>1</polarity>
+      </NamedEntityMention>
+      <NamedEntityMention start="59" end="68" coveredText="treatment">
+        <context reference="../../../.."/>
+        <ontologyConcepts class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>416118004</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C1533734</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>103733002</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0087111</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>108234007</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C1533734</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>276239002</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0087111</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>266761005</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0087111</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+Disconnected from the target VM, address: '127.0.0.1:59745', transport: 'socket'
+            <conceptId>277132007</conceptId>
+            <semanticType>T061</semanticType>
+            <cui>C0087111</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+        </ontologyConcepts>
+        <generic>true</generic>
+        <conditional>false</conditional>
+        <polarity>1</polarity>
+      </NamedEntityMention>
+      <NamedEntityMention start="72" end="85" coveredText="heart failure">
+        <context reference="../../../.."/>
+        <ontologyConcepts class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>195117009</conceptId>
+            <semanticType>T047</semanticType>
+            <cui>C0018801</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>155374007</conceptId>
+            <semanticType>T047</semanticType>
+            <cui>C0018801</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>266308000</conceptId>
+            <semanticType>T047</semanticType>
+            <cui>C0018801</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>84114007</conceptId>
+            <semanticType>T047</semanticType>
+            <cui>C0018801</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>266248006</conceptId>
+            <semanticType>T047</semanticType>
+            <cui>C0018801</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>155377000</conceptId>
+            <semanticType>T047</semanticType>
+            <cui>C0018801</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>155375008</conceptId>
+            <semanticType>T047</semanticType>
+            <cui>C0018801</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+        </ontologyConcepts>
+        <generic>false</generic>
+        <conditional>false</conditional>
+        <polarity>1</polarity>
+      </NamedEntityMention>
+      <NamedEntityMention start="72" end="77" coveredText="heart">
+        <context reference="../../../.."/>
+        <ontologyConcepts class="scala.collection.immutable.$colon$colon">
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>128427003</conceptId>
+            <semanticType>T023</semanticType>
+            <cui>C0018787</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>80891009</conceptId>
+            <semanticType>T023</semanticType>
+            <cui>C0018787</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+          <de.tu.dresden.quasy.model.annotation.UmlsConcept>
+            <source>SNOMED</source>
+            <conceptId>302509004</conceptId>
+            <semanticType>T023</semanticType>
+            <cui>C1281570</cui>
+          </de.tu.dresden.quasy.model.annotation.UmlsConcept>
+        </ontologyConcepts>
+        <generic>true</generic>
+        <conditional>false</conditional>
+        <polarity>1</polarity>
+      </NamedEntityMention>
+    </NamedEntityMentions>
+  </annotations>
+</de.tu.dresden.quasy.model.Text>
