@@ -1,6 +1,6 @@
 package de.tu.dresden.quasy.enhancer
 
-import de.tu.dresden.quasy.model.Text
+import de.tu.dresden.quasy.model.AnnotatedText
 
 /**
  * @author dirk
@@ -8,5 +8,5 @@ import de.tu.dresden.quasy.model.Text
  * Time: 12:46 PM
  */
 trait TextEnhancer {
-    def enhance(text: Text)
+    def enhance(text: AnnotatedText)
 }

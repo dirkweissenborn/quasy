@@ -4,7 +4,7 @@ import java.io.{FileInputStream, File}
 import opennlp.tools.chunker.{Chunker, ChunkerME, ChunkerModel}
 import org.apache.commons.logging.LogFactory
 import de.tu.dresden.quasy.enhancer.TextEnhancer
-import de.tu.dresden.quasy.model.{Text}
+import de.tu.dresden.quasy.model.{AnnotatedText}
 import java.util.Properties
 import de.tu.dresden.quasy.model.annotation.Sentence
 
@@ -32,7 +32,7 @@ class OpenNlpChunkEnhancer(val modelFile:File) extends TextEnhancer{
         }
     }
 
-    def enhance(text: Text) {
+    def enhance(text: AnnotatedText) {
         text.getAnnotations[Sentence].foreach(sentence => {
             val tokens = sentence.getTokens
             val tags = sentence.getTokens.map(_.posTag)

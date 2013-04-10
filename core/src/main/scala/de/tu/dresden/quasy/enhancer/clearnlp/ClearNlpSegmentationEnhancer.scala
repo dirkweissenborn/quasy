@@ -3,7 +3,7 @@ package de.tu.dresden.quasy.enhancer.clearnlp
 import com.googlecode.clearnlp.reader.AbstractReader
 import java.io._
 import com.googlecode.clearnlp.engine.EngineGetter
-import de.tu.dresden.quasy.model.{Text}
+import de.tu.dresden.quasy.model.{AnnotatedText}
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter
 import scala.collection.JavaConversions._
 import de.tu.dresden.quasy.enhancer.TextEnhancer
@@ -26,7 +26,7 @@ class ClearNlpSegmentationEnhancer(dictionaryFile:File, language: String = Abstr
     if (tokenizer == null || segmenter == null)
         throw new InstantiationException("File "+dictionaryFile.getAbsolutePath+" is not a clearnlp lexicon file!")
 
-    def enhance(text: Text) {
+    def enhance(text: AnnotatedText) {
         val textString = text.text
         var sectionOffset = 0
 

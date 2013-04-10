@@ -2,7 +2,8 @@ package de.tu.dresden.quasy.util
 
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.xml.DomDriver
-import de.tu.dresden.quasy.model.{Span, Text}
+import de.tu.dresden.quasy.model.{Span, AnnotatedText}
+import de.tu.dresden.quasy.model.annotation.{DepTag, UmlsConcept, SemanticRoleLabel, OntologyConcept}
 
 /**
  * @author dirk
@@ -18,15 +19,29 @@ object AnnotatedTextXmlizer {
         xstream.autodetectAnnotations(true)
         xstream.registerConverter(new ListConverter(xstream.getMapper))
 
-        val clazz = classOf[Span]
-        xstream.useAttributeFor(clazz,"start")
-        xstream.useAttributeFor(clazz,"end")
+        xstream.alias("span", classOf[Span])
+        xstream.alias("ontologyConcept", classOf[OntologyConcept])
+        xstream.alias("srl", classOf[SemanticRoleLabel])
+        xstream.alias("umlsConcept", classOf[UmlsConcept])
 
-        xstream.omitField(classOf[de.tu.dresden.quasy.model.annotation.Token],"bitmap_-0")
+        val clazz = classOf[de.tu.dresden.quasy.model.annotation.Annotation]
+        xstream.useAttributeFor(clazz,"begin")
+        xstream.useAttributeFor(clazz,"end")
+        xstream.useAttributeFor(clazz,"coveredText")
+
+        xstream.useAttributeFor(classOf[Span],"begin")
+        xstream.useAttributeFor(classOf[Span],"end")
+
+        xstream.useAttributeFor(classOf[DepTag],"dependsOn")
+        xstream.useAttributeFor(classOf[DepTag],"tag")
+
+        xstream.useAttributeFor(classOf[SemanticRoleLabel],"head")
+        xstream.useAttributeFor(classOf[SemanticRoleLabel],"label")
+
     }
 
-    def toXml(text:Text) = xstream.toXML(text)
+    def toXml(text:AnnotatedText) = xstream.toXML(text)
 
-    def fromXml(xml:String) = xstream.fromXML(xml).asInstanceOf[Text]
+    def fromXml(xml:String) = xstream.fromXML(xml).asInstanceOf[AnnotatedText]
 
 }

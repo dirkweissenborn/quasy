@@ -1,6 +1,6 @@
 package de.tu.dresden.quasy.enhancer.clearnlp
 
-import de.tu.dresden.quasy.model.{Text}
+import de.tu.dresden.quasy.model.{AnnotatedText}
 import com.googlecode.clearnlp.engine.{EngineProcess, EngineGetter}
 import java.io.{FileNotFoundException, FileInputStream, File}
 import com.googlecode.clearnlp.reader.AbstractReader
@@ -27,7 +27,7 @@ class ClearNlpPosAndLemmaEnhancer(val posModelFile:File, dictionaryFile:File, la
     if (taggers == null)
         throw new InstantiationException("File "+posModelFile+" is not a pos tagging model!")
 
-    def enhance(text: Text) {
+    def enhance(text: AnnotatedText) {
         text.getAnnotations[Sentence].foreach(sentence => {
             val tokens = sentence.getTokens
             val nodes = EngineProcess.getPOSNodesWithLemmas(taggers, analyzer, seqAsJavaList(tokens.map(_.coveredText)))

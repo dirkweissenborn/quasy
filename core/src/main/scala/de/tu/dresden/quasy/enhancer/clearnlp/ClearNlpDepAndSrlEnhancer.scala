@@ -2,7 +2,7 @@ package de.tu.dresden.quasy.enhancer.clearnlp
 
 import java.io.{FileInputStream, FileNotFoundException, File}
 import com.googlecode.clearnlp.engine.{EngineProcess, EngineGetter}
-import de.tu.dresden.quasy.model.{Text}
+import de.tu.dresden.quasy.model.{AnnotatedText}
 import de.tu.dresden.quasy.util.ClearNlpHelper
 import scala.collection.JavaConversions._
 import de.tu.dresden.quasy.enhancer.TextEnhancer
@@ -34,7 +34,7 @@ class ClearNlpDepAndSrlEnhancer(val parserModelFile:File,val predModelFile:File 
     if (parser == null)
         throw new InstantiationException("File "+parserModelFile+" is not a pos tagging model!")
 
-    def enhance(text: Text) {
+    def enhance(text: AnnotatedText) {
         text.getAnnotations[Sentence].foreach(sentence => {
             val tokens = sentence.getTokens
             val posNodes = ClearNlpHelper.toPOSNodes(tokens)

@@ -36,7 +36,7 @@ public class JSONServiceCallExample {
         //Logger httpLogger = Logger.getLogger("org.apache.commons.httpclient");
         //httpLogger.setLevel(Level.ERROR);
 
-        JSONServiceCallExample.getMeSHConcepts("cancer");
+        JSONServiceCallExample.getMeSHConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?");
 
         System.exit(0);
     }
