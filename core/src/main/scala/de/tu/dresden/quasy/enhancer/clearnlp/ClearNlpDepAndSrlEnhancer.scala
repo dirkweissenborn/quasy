@@ -32,7 +32,7 @@ class ClearNlpDepAndSrlEnhancer(val parserModelFile:File,val predModelFile:File 
 
 
     if (parser == null)
-        throw new InstantiationException("File "+parserModelFile+" is not a pos tagging model!")
+        throw new InstantiationException("File "+parserModelFile+" is not a dep parser model!")
 
     def enhance(text: AnnotatedText) {
         text.getAnnotations[Sentence].foreach(sentence => {

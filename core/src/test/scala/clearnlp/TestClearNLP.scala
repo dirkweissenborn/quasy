@@ -21,7 +21,7 @@ class TestClearNLP  extends FunSuite{
     } */
 
     test("bla") {
-        val segmenter = new ClearNlpSegmentationEnhancer(new File("de/tu/dresden/bioasq/model/dictionary-1.3.1.zip"))
+        val segmenter = new ClearNlpSegmentationEnhancer(new File("home/dirk/workspace/bioasq/bioasq/model/dictionary-1.3.1.zip"))
         val text = new AnnotatedText("This is! a test? \n about segmentation.")
 
         segmenter.enhance(text)
@@ -42,7 +42,7 @@ class TestClearNLP  extends FunSuite{
         assert(tokens.last.begin === 37)
         assert(tokens.last.end === 38)
 
-        val postagger = new ClearNlpPosAndLemmaEnhancer(new File("de/tu/dresden/bioasq/model/medical-en-pos-1.1.0g.jar"),new File("de/tu/dresden/bioasq/model/dictionary-1.3.1.zip"))
+        val postagger = new ClearNlpPosAndLemmaEnhancer(new File("home/dirk/workspace/bioasq/model/medical-en-pos-1.1.0g.jar"),new File("home/dirk/workspace/bioasq/model/dictionary-1.3.1.zip"))
         postagger.enhance(text)
 
 

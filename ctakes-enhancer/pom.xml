@@ -82,7 +82,7 @@
             <artifactId>medfacts-i2b2</artifactId>
             <version>1.2</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/med-facts-i2b2-1.2-SNAPSHOT.jar</systemPath>
+            <systemPath>${libpath}/med-facts-i2b2-1.2-SNAPSHOT.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -90,7 +90,7 @@
             <artifactId>medfacts-zoner</artifactId>
             <version>1.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/med-facts-zoner-1.1.jar</systemPath>
+            <systemPath>${libpath}/med-facts-zoner-1.1.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -98,7 +98,7 @@
             <artifactId>jcarafe.core</artifactId>
             <version>2.9.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/jcarafe-core_2.9.1-0.9.8.3.RC4.jar</systemPath>
+            <systemPath>${libpath}/jcarafe-core_2.9.1-0.9.8.3.RC4.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -106,7 +106,7 @@
             <artifactId>jcarafe.ext</artifactId>
             <version>2.9.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/jcarafe-ext_2.9.1-0.9.8.3.RC4.jar</systemPath>
+            <systemPath>${libpath}/jcarafe-ext_2.9.1-0.9.8.3.RC4.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -114,7 +114,7 @@
             <artifactId>lvg2010dist</artifactId>
             <version>0.0.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/lvg2010dist.jar</systemPath>
+            <systemPath>${libpath}/lvg2010dist.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -122,7 +122,7 @@
             <artifactId>findstruct</artifactId>
             <version>0.0.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/FindStructAPI.jar</systemPath>
+            <systemPath>${libpath}/FindStructAPI.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -130,7 +130,7 @@
             <artifactId>sqlWrapper</artifactId>
             <version>0.0.1</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/SQLWrapper.jar</systemPath>
+            <systemPath>${libpath}/SQLWrapper.jar</systemPath>
         </dependency>
 
     </dependencies>

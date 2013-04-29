@@ -3,14 +3,17 @@ package de.tu.dresden.quasy.util
 import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.xml.DomDriver
 import de.tu.dresden.quasy.model.{Span, AnnotatedText}
-import de.tu.dresden.quasy.model.annotation.{DepTag, UmlsConcept, SemanticRoleLabel, OntologyConcept}
+import de.tu.dresden.quasy.model.annotation._
+import java.io.File
+import io.Source
+import opennlp.tools.util.InvalidFormatException
 
 /**
  * @author dirk
  * Date: 4/9/13
  * Time: 1:23 PM
  */
-object AnnotatedTextXmlizer {
+object Xmlizer {
 
     val xstream = new XStream(new DomDriver())
     init
@@ -25,8 +28,8 @@ object AnnotatedTextXmlizer {
         xstream.alias("umlsConcept", classOf[UmlsConcept])
 
         val clazz = classOf[de.tu.dresden.quasy.model.annotation.Annotation]
-        xstream.useAttributeFor(clazz,"begin")
-        xstream.useAttributeFor(clazz,"end")
+        //xstream.useAttributeFor(clazz,"begin")
+        //xstream.useAttributeFor(clazz,"end")
         xstream.useAttributeFor(clazz,"coveredText")
 
         xstream.useAttributeFor(classOf[Span],"begin")
@@ -38,10 +41,35 @@ object AnnotatedTextXmlizer {
         xstream.useAttributeFor(classOf[SemanticRoleLabel],"head")
         xstream.useAttributeFor(classOf[SemanticRoleLabel],"label")
 
+        xstream.useAttributeFor(classOf[AnnotatedText],"id")
+
+
+        xstream.omitField(clazz,"tokens")
+
+        xstream.omitField(classOf[DepTag],"headToken")
+        xstream.omitField(classOf[Token],"sentence")
+        xstream.omitField(classOf[Token],"depDepth")
+
+        xstream.omitField(classOf[Sentence],"dependencyTree")
+
+        xstream.omitField(classOf[Any],"bitmap$0")
+
     }
 
-    def toXml(text:AnnotatedText) = xstream.toXML(text)
+    def toXml(text:Any) = xstream.toXML(text)
 
-    def fromXml(xml:String) = xstream.fromXML(xml).asInstanceOf[AnnotatedText]
+    def fromXml[T](xml:String):T =
+            xstream.fromXML(xml).asInstanceOf[T]
+
+
+    def fromFile[T](file:File) = {
+        try {
+            val xml = Source.fromFile(file).getLines().mkString("\n")
+            fromXml[T](xml)
+        }
+        catch {
+            case ex:Exception => throw new InvalidFormatException("Couldn't parse file: "+file.getAbsolutePath+"\n"+ex.printStackTrace())
+        }
+    }
 
 }

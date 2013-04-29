@@ -46,18 +46,18 @@ class ClearNlpPosAndLemmaEnhancer(val posModelFile:File, dictionaryFile:File, la
 object ClearNlpPosAndLemmaEnhancer {
     val LOG =  LogFactory.getLog(getClass)
 
-    final val POS_MODEL_PROPERTY_NAME = "enhancer.clearnlp.dependency.model"
+    final val POS_MODEL_PROPERTY_NAME = "enhancer.clearnlp.pos.model"
     final val DICTIONARY_PROPERTY_NAME = ClearNlpSegmentationEnhancer.DICTIONARY_PROPERTY_NAME
 
 
     def fromConfiguration(properties:Properties):ClearNlpPosAndLemmaEnhancer = {
         var enhancer: ClearNlpPosAndLemmaEnhancer = null
-        val modelPath = properties.getProperty(POS_MODEL_PROPERTY_NAME)
-        if (modelPath!=null) {
+        val posModelPath = properties.getProperty(POS_MODEL_PROPERTY_NAME)
+        if (posModelPath!=null) {
             val dictionaryPath = properties.getProperty(DICTIONARY_PROPERTY_NAME)
 
             if (dictionaryPath != null) {
-                enhancer = new ClearNlpPosAndLemmaEnhancer(new File(modelPath), new File(dictionaryPath))
+                enhancer = new ClearNlpPosAndLemmaEnhancer(new File(posModelPath), new File(dictionaryPath))
             } else {
                 enhancer = null
             }

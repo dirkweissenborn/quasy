@@ -2,67 +2,153 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>bioasq</artifactId>
-        <groupId>de.tu.dresden.bioasq</groupId>
-        <version>0.1-SNAPSHOT</version>
-        <relativePath>..</relativePath>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>bioasq</artifactId>
+    <groupId>de.tu.dresden.bioasq</groupId>
+    <version>0.1-SNAPSHOT</version>
+    <relativePath>..</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>core</artifactId>
-
-
-    <dependencies>
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-        </dependency>
-
-        <!-- Test -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.tools.version}</artifactId>
-        </dependency>
+  <artifactId>core</artifactId>
 
 
-        <!-- enhancement dependencies -->
-        <dependency>
-            <groupId>com.googlecode.clearnlp</groupId>
-            <artifactId>clearnlp</artifactId>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>org.apache.opennlp</groupId>
-            <artifactId>opennlp-tools</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>com.thoughtworks.xstream</groupId>
-            <artifactId>xstream</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
 
-    </dependencies>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore-nio</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient-cache</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+    </dependency>
+
+    <!-- Test -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_${scala.tools.version}</artifactId>
+    </dependency>
+
+
+    <!-- enhancement dependencies -->
+    <dependency>
+      <groupId>com.googlecode.clearnlp</groupId>
+      <artifactId>clearnlp</artifactId>
+    </dependency>
+
+    <!--dependency>
+      <groupId>edu.stanford.nlp</groupId>
+      <artifactId>stanford-corenlp</artifactId>
+    </dependency-->
+
+    <dependency>
+      <groupId>org.apache.opennlp</groupId>
+      <artifactId>opennlp-tools</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.thoughtworks.xstream</groupId>
+      <artifactId>xstream</artifactId>
+    </dependency>
+
+    <!-- Not uploaded dependencies -->
+    <dependency>
+      <groupId>gov.nih.nlm.nls.skr</groupId>
+      <artifactId>SKR_WEBAPI</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/skrAPI.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.cmu.lti</groupId>
+      <artifactId>ws4j</artifactId>
+      <version>1.0.1</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/ws4j-1.0.1.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>com.assembla.scala-incubator</groupId>
+      <artifactId>graph-core_2.9</artifactId>
+      <version>1.6.2</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/graph-core_2.9.2-1.6.2.jar</systemPath>
+    </dependency>
+
+    <!-- Stanford Dependencies-->
+    <dependency>
+      <groupId>edu.stanford.nlp</groupId>
+      <artifactId>core-nlp</artifactId>
+      <version>1.3.5</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/stanford-corenlp-1.3.5.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>xom</groupId>
+      <artifactId>xom</artifactId>
+      <version>1.2.5</version>
+    </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>de.jollyday</groupId>
+      <artifactId>jollyday</artifactId>
+      <version>0.4.7</version>
+    </dependency>
+
+  </dependencies>
 
 </project>
