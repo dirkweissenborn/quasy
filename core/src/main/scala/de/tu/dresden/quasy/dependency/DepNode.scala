@@ -1,42 +1,42 @@
-package de.tu.dresden.quasy.dep
+package de.tu.dresden.quasy.dependency
 
 import de.tu.dresden.quasy.model.annotation.Token
+import scalax.collection.GraphPredef.NodeIn
 
 /**
  * @author dirk
  * Date: 4/17/13
  * Time: 12:13 PM
  */
-class DependencyNode(var tokens:List[Token], var nodeHead:Token, var optional:Boolean = false) {
+class DepNode(var tokens:List[Token], var nodeHead:Token, var optional:Boolean = false) {
     tokens = tokens.sortBy(_.position)
 
     def this(token:Token) = this(List(token),token)
 
     override def hashCode() = tokens.hashCode() + nodeHead.hashCode()
 
-    override def toString = "DependencyNode["+tokens.map(_.coveredText).mkString(" ")+"]"
+    override def toString = "DepNode["+tokens.map(_.coveredText).mkString(" ")+"]"
 
     def getLabel = tokens.map(_.lemma).mkString(" ")
 
     override def equals(obj:Any) = obj match {
-        case templateNode:TemplateDependencyNode => {
+        case templateNode:TemplateDepNode => {
             templateNode.equals(this)
         }
-        case depNode:DependencyNode => {
+        case depNode:DepNode => {
             this.tokens.equals(depNode.tokens)  && depNode.nodeHead.equals(this.nodeHead)
         }
         case _ => false
     }
 }
 
-class TemplateDependencyNode(templateToken:Token, optional:Boolean = false) extends DependencyNode(List(templateToken),templateToken,optional) {
+class TemplateDepNode(val templateToken:Token, optional:Boolean = false) extends DepNode(List(templateToken),templateToken,optional) {
     private val tagRegex = nodeHead.depTag.tag.r
-    private val labelRegex = getLabel.r
 
     override def equals(obj:Any)  = obj match {
-        case depNode:DependencyNode => {
-            var matching = tagRegex.findFirstIn(depNode.nodeHead.depTag.tag).isDefined
-            matching = labelRegex.findFirstIn(depNode.getLabel).isDefined
+        case templNode:TemplateDepNode => templateToken.equals(templNode.templateToken)
+        case depNode:DepNode => {
+            val matching = tagRegex.findFirstIn(depNode.nodeHead.depTag.tag).isDefined
 
             if (matching) {
                 tokens = depNode.tokens
@@ -48,9 +48,9 @@ class TemplateDependencyNode(templateToken:Token, optional:Boolean = false) exte
     }
 }
 
-object DependencyNode {
+object DepNode {
 
-    def similarity(node1:DependencyNode, node2:DependencyNode) = {
+    def similarity(node1:DepNode, node2:DepNode) = {
         var sim = Token.similarity(node1.nodeHead,node2.nodeHead)
 
        /* var ts1 = node1.tokens
@@ -72,6 +72,6 @@ object DependencyNode {
         sim
     }
 
-    def equalDependencyTag(node1:DependencyNode, node2:DependencyNode):Boolean = node1.nodeHead.depTag.tag.equals(node2.nodeHead.depTag.tag)
+    def equalDependencyTag(node1:DepNode, node2:DepNode):Boolean = node1.nodeHead.depTag.tag.equals(node2.nodeHead.depTag.tag)
 
 }

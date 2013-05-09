@@ -124,6 +124,14 @@
       <systemPath>${libpath}/graph-core_2.9.2-1.6.2.jar</systemPath>
     </dependency>
 
+    <dependency>
+      <groupId>omiotis</groupId>
+      <artifactId>omiotis</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/OmiotisNew.jar</systemPath>
+    </dependency>
+
     <!-- Stanford Dependencies-->
     <dependency>
       <groupId>edu.stanford.nlp</groupId>
@@ -150,5 +158,28 @@
     </dependency>
 
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

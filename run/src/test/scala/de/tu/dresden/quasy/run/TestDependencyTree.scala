@@ -2,8 +2,8 @@ package de.tu.dresden.quasy.run
 
 import org.scalatest.FunSuite
 import de.tu.dresden.quasy.model.AnnotatedText
-import de.tu.dresden.quasy.model.annotation.{Chunk, Sentence}
-import de.tu.dresden.quasy.dep.{DependencyTree, CollapsedDependencyTree}
+import de.tu.dresden.quasy.model.annotation.{Sentence}
+import de.tu.dresden.quasy.dependency.{DependencyTree}
 import java.util.Properties
 import java.io.{File, FileInputStream}
 import de.tu.dresden.quasy.io.AnnotatedTextSource
@@ -34,7 +34,7 @@ class TestDependencyTree extends FunSuite {
 
         RunFullPipeline.run(corpus,null,props)
 
-        val depTrees = text.getAnnotations[Sentence].map(sentence => new CollapsedDependencyTree(sentence)).toArray
+        val depTrees = text.getAnnotations[Sentence].map(sentence => DependencyTree.fromSentence(sentence)).toArray
 
         assert(DependencyTree.greedySimilarity(depTrees(0),depTrees(1)) > DependencyTree.greedySimilarity(depTrees(0),depTrees(2)))
     }

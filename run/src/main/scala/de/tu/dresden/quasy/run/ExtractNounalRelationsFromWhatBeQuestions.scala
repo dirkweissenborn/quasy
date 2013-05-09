@@ -4,7 +4,7 @@ import java.io.{FileWriter, PrintWriter, File}
 import de.tu.dresden.quasy.util.Xmlizer
 import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.model.annotation.{Sentence, Token}
-import de.tu.dresden.quasy.dep.DependencyTree
+import de.tu.dresden.quasy.dependency.DependencyTree
 
 /**
  * @author dirk

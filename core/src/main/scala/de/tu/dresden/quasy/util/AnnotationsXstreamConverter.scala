@@ -34,11 +34,13 @@ class AnnotationsXstreamConverter extends Converter {
 
     def unmarshal(reader: HierarchicalStreamReader, context: UnmarshallingContext) = {
         val map = Map[Manifest[_],List[Annotation]]()
+        val annotationM = Manifest.classType(classOf[Annotation])
+
         while(reader.hasMoreChildren) {
             reader.moveDown()
             val className = reader.getAttribute("class")
             val clazz = Class.forName(className)
-            val m = Manifest.classType(clazz)
+            var m = Manifest.classType(clazz)
 
             var list = List[Annotation]()
             while(reader.hasMoreChildren) {
@@ -47,7 +49,10 @@ class AnnotationsXstreamConverter extends Converter {
                 list ++= List(current.asInstanceOf[Annotation])
                 reader.moveUp()
             }
-            map += (m -> list)
+            while(m.<:<(annotationM) && !m.equals(annotationM)) {
+                map += (m -> list)
+                m = Manifest.classType(m.erasure.getSuperclass)
+            }
 
             reader.moveUp()
         }

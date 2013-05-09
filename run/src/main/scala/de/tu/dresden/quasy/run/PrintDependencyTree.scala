@@ -2,7 +2,7 @@ package de.tu.dresden.quasy.run
 
 import de.tu.dresden.quasy.enhancer.clearnlp.FullClearNlpPipeline
 import java.util.Properties
-import de.tu.dresden.quasy.dep.DependencyTree
+import de.tu.dresden.quasy.dependency.DependencyTree
 import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.model.annotation.Sentence
 import java.io.{FileInputStream, File}
@@ -14,7 +14,7 @@ import java.io.{FileInputStream, File}
  */
 object PrintDependencyTree {
 
-    var sentences = List("What activities do patients with patellar instability perceive makes their patella unstable?")
+      var sentences = List("What activities do patients with patellar instability perceive makes their patella unstable?")
 
       def main(args:Array[String]) {
           val props = new Properties()

@@ -9,6 +9,7 @@
         <module>core</module>
         <module>ctakes-enhancer</module>
         <module>run</module>
+      <module>utility</module>
     </modules>
     <name>${project.artifactId}</name>
     <description>BioASQ QA System</description>
@@ -44,7 +45,14 @@
                 <version>2.2.2</version>
             </dependency>
 
-            <!-- Test -->
+          <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>3.6.2</version>
+          </dependency>
+
+
+          <!-- Test -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>

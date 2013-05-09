@@ -2,6 +2,7 @@ package de.tu.dresden.quasy.answer.fetch
 
 import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.answer.model.AnswerCandidate
+import de.tu.dresden.quasy.model.annotation.Question
 
 /**
  * @author dirk
@@ -10,6 +11,6 @@ import de.tu.dresden.quasy.answer.model.AnswerCandidate
  */
 trait CandidateFetcher {
 
-    def fetch(question:AnnotatedText, docCount:Int) : List[AnswerCandidate]
+    def fetch(question:Question, docCount:Int) : List[AnswerCandidate]
 
 }

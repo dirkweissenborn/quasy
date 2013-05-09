@@ -15,6 +15,8 @@ import org.apache.commons.logging.LogFactory
  */
 class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
 
+    def this(enhancers:TextEnhancer*) = this(enhancers.toList)
+
     private val LOG = LogFactory.getLog(getClass)
 
     private var next = Map[TextEnhancer,TextEnhancer]()

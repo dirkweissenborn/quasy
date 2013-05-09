@@ -1,4 +1,4 @@
-package de.tu.dresden.quasy.dep
+package de.tu.dresden.quasy.dependency
 
 /**
  * @author dirk

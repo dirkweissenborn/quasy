@@ -46,30 +46,24 @@ class FullClearNlpPipeline(val dictionaryFile:File,
 
         textString.split("[\n\r]").foreach(sectionString => {
             if (sectionString != "") {
+                sectionOffset =  textString.indexOf(sectionString, sectionOffset)
                 new Section(sectionOffset,sectionOffset+sectionString.length,text)
 
                 var sentenceOffset = 0
 
                 segmenter.getSentences(new BufferedReader(new StringReader(sectionString))).map(tokenList => {
-                    var sentenceString = sectionString.substring(sentenceOffset, sectionString.indexOf(tokenList.last, sentenceOffset)+1)
-
-                    while(sentenceString.startsWith(" ")) {
-                        sentenceString = sentenceString.substring(1)
-                        sentenceOffset += 1
-                    }
-
-                    new Sentence(sectionOffset+sentenceOffset, sectionOffset+sentenceOffset+sentenceString.length,text)
+                    sentenceOffset =  sectionString.indexOf(tokenList.head, sentenceOffset)
 
                     val nlp = new NLPDecode()
                     val tree = nlp.toDEPTree(tokenList)
                     components.foreach(component => component.process(tree) )
 
-                    var tokenOffset = 0
+                    var tokenOffset = sentenceOffset
                     var position = 1
                     tokenList.zip(tree.tail).foreach{
                         case (tokenString,depNode) => {
-                            tokenOffset = sentenceString.indexOf(tokenString, tokenOffset)
-                            val tokenStart: Int = sectionOffset + sentenceOffset + tokenOffset
+                            tokenOffset = sectionString.indexOf(tokenString, tokenOffset)
+                            val tokenStart: Int = sectionOffset + tokenOffset
                             val token = new Token( tokenStart, tokenStart+tokenString.length, text, position)
 
                             token.lemma = depNode.lemma
@@ -86,10 +80,16 @@ class FullClearNlpPipeline(val dictionaryFile:File,
                             position += 1
                     }}
 
+                    val sentenceString = sectionString.substring(sentenceOffset, tokenOffset)
+                    if (tokenList.last.equals("?"))
+                        new Question(sectionOffset+sentenceOffset, sectionOffset+sentenceOffset+sentenceString.length,text)
+                    else
+                        new Sentence(sectionOffset+sentenceOffset, sectionOffset+sentenceOffset+sentenceString.length,text)
+
                     sentenceOffset += sentenceString.length
                 } )
             }
-            sectionOffset += 1 + sectionString.length
+            sectionOffset += sectionString.length
         })
     }
 }
@@ -98,7 +98,7 @@ object FullClearNlpPipeline{
     val LOG =  LogFactory.getLog(getClass)
 
     final val POS_MODEL_PROPERTY_NAME = "enhancer.clearnlp.pos.model"
-    final val DICTIONARY_PROPERTY_NAME = ClearNlpSegmentationEnhancer.DICTIONARY_PROPERTY_NAME
+    final val DICTIONARY_PROPERTY_NAME = "enhancer.clearnlp.dictionary"
     final val DEP_MODEL_PROPERTY_NAME = "enhancer.clearnlp.dependency.model"
     final val PRED_MODEL_PROPERTY_NAME = "enhancer.clearnlp.predicates.model"
     final val SRL_MODEL_PROPERTY_NAME = "enhancer.clearnlp.srl.model"

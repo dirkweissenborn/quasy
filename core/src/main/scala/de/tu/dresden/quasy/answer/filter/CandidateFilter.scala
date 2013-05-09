@@ -18,4 +18,12 @@ class CandidateFilter(scorer:Scorer) {
         }).take(maxNr)
     }
 
+    def filter(candidates:List[AnswerCandidate], threshold:Double) : List[AnswerCandidate] = {
+        candidates.filter(candidate => {
+            val score = scorer.score(candidate)
+            candidate.scores += (Manifest.classType(scorer.getClass) -> score)
+            score >= threshold
+        })
+    }
+
 }

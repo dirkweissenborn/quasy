@@ -4,7 +4,7 @@ import com.thoughtworks.xstream.XStream
 import com.thoughtworks.xstream.io.xml.DomDriver
 import de.tu.dresden.quasy.model.{Span, AnnotatedText}
 import de.tu.dresden.quasy.model.annotation._
-import java.io.File
+import java.io.{FileWriter, File}
 import io.Source
 import opennlp.tools.util.InvalidFormatException
 
@@ -28,8 +28,6 @@ object Xmlizer {
         xstream.alias("umlsConcept", classOf[UmlsConcept])
 
         val clazz = classOf[de.tu.dresden.quasy.model.annotation.Annotation]
-        //xstream.useAttributeFor(clazz,"begin")
-        //xstream.useAttributeFor(clazz,"end")
         xstream.useAttributeFor(clazz,"coveredText")
 
         xstream.useAttributeFor(classOf[Span],"begin")
@@ -43,20 +41,18 @@ object Xmlizer {
 
         xstream.useAttributeFor(classOf[AnnotatedText],"id")
 
-
         xstream.omitField(clazz,"tokens")
+
+        xstream.omitField(classOf[Sentence],"dependencyTree")
 
         xstream.omitField(classOf[DepTag],"headToken")
         xstream.omitField(classOf[Token],"sentence")
         xstream.omitField(classOf[Token],"depDepth")
 
-        xstream.omitField(classOf[Sentence],"dependencyTree")
-
         xstream.omitField(classOf[Any],"bitmap$0")
-
     }
 
-    def toXml(text:Any) = xstream.toXML(text)
+    def toXml(obj:Any) = xstream.toXML(obj)
 
     def fromXml[T](xml:String):T =
             xstream.fromXML(xml).asInstanceOf[T]
@@ -69,6 +65,15 @@ object Xmlizer {
         }
         catch {
             case ex:Exception => throw new InvalidFormatException("Couldn't parse file: "+file.getAbsolutePath+"\n"+ex.printStackTrace())
+        }
+    }
+
+    def toFile(obj:Any,file:File) = {
+        try {
+            xstream.toXML(obj,new FileWriter(file))
+        }
+        catch {
+            case ex:Exception => ex.printStackTrace()
         }
     }
 

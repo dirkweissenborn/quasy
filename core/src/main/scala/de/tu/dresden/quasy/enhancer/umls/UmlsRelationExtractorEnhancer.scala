@@ -3,7 +3,7 @@ package de.tu.dresden.quasy.enhancer.umls
 import gov.nih.nlm.nls.skr.GenericObject
 import de.tu.dresden.quasy.enhancer.TextEnhancer
 import de.tu.dresden.quasy.model.{Span, AnnotatedText}
-import de.tu.dresden.quasy.model.annotation.{SemanticRelationAnnotation, NamedEntityMention, UmlsConcept}
+import de.tu.dresden.quasy.model.annotation.{SemanticRelationAnnotation, OntologyEntityMention, UmlsConcept}
 import de.tu.dresden.quasy.util.Xmlizer
 import java.io._
 import org.apache.http.entity.mime.content.FileBody
@@ -27,7 +27,7 @@ SE|00000000||tx|1|relation|3|2|C0004057|Aspirin|orch,phsu|phsu|||aspirin||||1000
 
     def enhance(text: AnnotatedText) {
         val resultStr = requestSemRep(text.text+"\n")
-        var NEs = List[NamedEntityMention]()
+        var NEs = List[OntologyEntityMention]()
         resultStr.split("""\n""").foreach( line => {
             val split = line.split("""\|""")
 
@@ -35,7 +35,7 @@ SE|00000000||tx|1|relation|3|2|C0004057|Aspirin|orch,phsu|phsu|||aspirin||||1000
                 val Array(_,_,_,_,_,"entity",cui,_,tuis,_,_,_,_,_,_,begin,end) = split
                 val concept = new UmlsConcept(cui, tuis.split(","))
 
-                NEs ::= new NamedEntityMention(Array(new Span(begin.toInt,end.toInt + 1)), text, List(concept))
+                NEs ::= new OntologyEntityMention(Array(new Span(begin.toInt,end.toInt + 1)), text, List(concept))
             } else if (split.size > 5 && split(5).equals("relation"))  {
                 val beginSubj = split(19).toInt
                 val endSubj = split(20).toInt +1

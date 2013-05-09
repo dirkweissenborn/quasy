@@ -5,10 +5,10 @@ import java.util.Properties
 import de.tu.dresden.quasy.io.{AnnotatedTextSource, PlainTextSource}
 import de.tu.dresden.quasy.enhancer.clearnlp.{FullClearNlpPipeline}
 import de.tu.dresden.quasy.enhancer.opennlp.OpenNlpChunkEnhancer
-import de.tu.dresden.quasy.enhancer.{TextEnhancer, EnhancementPipeline}
+import de.tu.dresden.quasy.enhancer.{OntologyEntitySelector, NounalRelationEnhancer, TextEnhancer, EnhancementPipeline}
 import de.tu.dresden.quasy.enhancer.bioasq._
 import de.tu.dresden.quasy.enhancer.stanford.FullStanfordNlpEnhancer
-import de.tu.dresden.quasy.model.AnnotatedText
+import de.tu.dresden.quasy.enhancer.transinsight.TransinsightAnnotator
 
 /**
  * @author dirk
@@ -17,7 +17,7 @@ import de.tu.dresden.quasy.model.AnnotatedText
  */
 object RunFullPipeline {
 
-    main(Array("corpus/question_corpus1000.txt","annotations/question_corpus1000","conf/configuration.properties"))
+   main(Array("corpus/question_corpus1000.txt","annotations/question_corpus1000","conf/configuration.properties"))
 
     def main(args:Array[String]) {
         if (args.size < 3) {
@@ -59,6 +59,6 @@ object RunFullPipeline {
 
         val chunker = OpenNlpChunkEnhancer.fromConfiguration(configuration)
 
-        new EnhancementPipeline(List(lexicalAnnotation, chunker, new MeshEnhancer)) //, new UniprotEnhancer, new DoidEnhancer, new GoEnhancer))//, new JochemEnhancer))
+        new EnhancementPipeline(List(lexicalAnnotation, chunker, new TransinsightAnnotator, new OntologyEntitySelector(0.1))) //, new UniprotEnhancer, new DoidEnhancer, new GoEnhancer))//, new JochemEnhancer))
     }
 }

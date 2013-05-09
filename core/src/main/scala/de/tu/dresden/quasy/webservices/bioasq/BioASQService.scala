@@ -1,6 +1,6 @@
 package de.tu.dresden.quasy.webservices.bioasq
 
-import model.{DocumentsResult, LinkedLifeTriples, FindEntityResult}
+import model.{FindEntityRequest, DocumentsResult, LinkedLifeTriples, BioASQServiceResult}
 import org.apache.commons.logging.LogFactory
 import com.google.gson.{Gson, JsonObject, JsonParser}
 import org.apache.commons.httpclient.{HttpException, HttpClient}
@@ -17,7 +17,7 @@ import org.apache.commons.io.IOUtils
  * Date: 4/10/13
  * Time: 10:09 AM
  */
-class BioASQServiceCall {
+class BioASQService {
 
     final val JOCHEM_URL = "http://www.gopubmed.org/web/bioasq/jochem/json"
     final val UNIPROT_URL = "http://www.gopubmed.org/web/bioasq/uniprot/json"
@@ -33,19 +33,18 @@ class BioASQServiceCall {
     private final var httpClient: HttpClient = new HttpClient
     private final val gson = new Gson()
 
-    private val writer = new StringWriter()
-
-
     def getEntityConcepts[T](query: String, url:String, nr:Int = -1)(implicit m:Manifest[T]): T = {
         if (query == null) throw new NullPointerException("Query must not be null")
         val targetUrl: String = getTargetUrl(url)
-        var queryString: String = "'"+query+"'"
+        var requestObjects:Array[Any] = Array(query)
         if (nr > 0)
-            queryString += ",1,"+nr+""
+            requestObjects ++= Array(1,nr)
 
-        LOG.info("Query-url: "+url+"  - findEntities=\""+queryString+"\"")
+        //LOG.info("Query-url: "+url+"  - findEntities=\""+queryString+"\"")
 
-        val searchJsonQuery: String = toJsonQueryForTerms("findEntities", queryString)
+        val request = FindEntityRequest(requestObjects)
+
+        val searchJsonQuery: String = gson.toJson(request)
         //System.out.println("Query becomes:\n" + searchJsonQuery)
         val jsonObject: JsonObject = executeJsonQuery(targetUrl, searchJsonQuery)
         var result:Any = null
@@ -55,23 +54,23 @@ class BioASQServiceCall {
     }
 
     def getMeSHConcepts(query: String) = {
-        getEntityConcepts[FindEntityResult](query,MESH_URL)
+        getEntityConcepts[BioASQServiceResult](query,MESH_URL)
     }
 
     def getUniprotConcepts(query: String) = {
-        getEntityConcepts[FindEntityResult](query, UNIPROT_URL)
+        getEntityConcepts[BioASQServiceResult](query, UNIPROT_URL)
     }
 
     def getGoConcepts(query: String) = {
-        getEntityConcepts[FindEntityResult](query,GO_URL)
+        getEntityConcepts[BioASQServiceResult](query,GO_URL)
     }
 
     def getJochemConcepts(query: String) = {
-        getEntityConcepts[FindEntityResult](query,JOCHEM_URL)
+        getEntityConcepts[BioASQServiceResult](query,JOCHEM_URL)
     }
 
     def getDoidConcepts(query: String) = {
-        getEntityConcepts[FindEntityResult](query,DOID_URL)
+        getEntityConcepts[BioASQServiceResult](query,DOID_URL)
     }
 
     def getLinkedLifeTriples(query: String): LinkedLifeTriples = {
@@ -103,14 +102,6 @@ class BioASQServiceCall {
         }
     }
 
-    private def toJsonQueryForTerms(key:String, query:String): String = {
-        val builder: StringBuilder = new StringBuilder
-        builder.append("{'")
-        builder.append(key)
-        builder.append("':[" + query + "]}")
-        builder.toString
-    }
-
     private def executeJsonQuery(uri: String, query: String): JsonObject = {
 
         val method: PostMethod = new PostMethod(uri)
@@ -132,11 +123,12 @@ class BioASQServiceCall {
             try {
                 httpClient.executeMethod(method)
                 val resultBody = IOUtils.toString(method.getResponseBodyAsStream)
-                LOG.info("Result:" + resultBody)
+                //LOG.info("Result:" + resultBody)
                 jsonObject = jsonParser.parse(resultBody).getAsJsonObject
             }
             catch {
                 case exception: Exception => {
+                    exception.printStackTrace()
                     LOG.error("Servicecall error, trying again!")
                     httpClient = new HttpClient()
                 }
@@ -151,18 +143,18 @@ class BioASQServiceCall {
     }
 }
 
-object BioASQServiceCall {
+object BioASQService {
 
     def main(args: Array[String]) {
-        val service = new BioASQServiceCall
+        val service = new BioASQService
         //httpClient.getParams.setAuthenticationPreemptive(true)
-        //service.getMeSHConcepts("6-(hydroxymethyl)oxane-2,3,4,5-tetrol")
+        service.getMeSHConcepts("Drugs that bind to but do not activate SEROTONIN 5-HT1 RECEPTORS, thereby blocking the actions of SEROTONIN 5-HT1 RECEPTOR AGONISTS. Included under this heading are antagonists for one or more of the specific 5-HT1 receptor subtypes.")
         /*getGoConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getUniprotConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getJochemConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getDoidConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")*/
         //service.getLinkedLifeTriples("Dextrose")
-        service.getPmcDocuments("What is the role of thyroid hormones administration in the treatment of heart failure?",10)
+        //service.getPmcDocuments("What is the role of thyroid hormones administration in the treatment of heart failure?",10)
         System.exit(0)
     }
 }

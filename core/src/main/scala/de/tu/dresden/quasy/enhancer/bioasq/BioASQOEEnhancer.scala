@@ -2,22 +2,22 @@ package de.tu.dresden.quasy.enhancer.bioasq
 
 import de.tu.dresden.quasy.enhancer.TextEnhancer
 import de.tu.dresden.quasy.model.{Span, AnnotatedText}
-import de.tu.dresden.quasy.model.annotation.{OntologyConcept, NamedEntityMention}
+import de.tu.dresden.quasy.model.annotation.{OntologyConcept, OntologyEntityMention}
 import collection.mutable._
 import org.apache.commons.logging.LogFactory
-import de.tu.dresden.quasy.webservices.bioasq.{BioASQServiceCall}
-import de.tu.dresden.quasy.webservices.bioasq.model.FindEntityResult
+import de.tu.dresden.quasy.webservices.bioasq.{BioASQService}
+import de.tu.dresden.quasy.webservices.bioasq.model.BioASQServiceResult
 
 /**
  * @author dirk
  * Date: 4/10/13
  * Time: 10:42 AM
  */
-abstract class BioASQNEEnhancer(serviceCall: String => FindEntityResult, source:String, minScore:Double=0.0) extends TextEnhancer {
+abstract class BioASQOEEnhancer(serviceCall: String => BioASQServiceResult, source:String, minScore:Double=0.0) extends TextEnhancer {
     private val LOG = LogFactory.getLog(getClass)
 
     def enhance(text: AnnotatedText) {
-        var result =  serviceCall(text.text)
+        val result =  serviceCall(text.text)
 
         if (result != null) {
             val ontologyConcepts = Map[List[Span],List[OntologyConcept]]()
@@ -37,7 +37,7 @@ abstract class BioASQNEEnhancer(serviceCall: String => FindEntityResult, source:
                             acc ++ List(span)
                     }).toList
 
-                    val concept = new OntologyConcept(source, finding.concept.termId, finding.score, finding.concept.uri)
+                    val concept = new OntologyConcept(source, finding.concept.label, finding.score, finding.concept.uri)
                     var concepts = ontologyConcepts.getOrElse(spans,List[OntologyConcept]())
                     concepts ::= concept
                     ontologyConcepts += (spans -> concepts)
@@ -46,7 +46,7 @@ abstract class BioASQNEEnhancer(serviceCall: String => FindEntityResult, source:
 
             ontologyConcepts.foreach {
                 case(spans, concepts) => {
-                    new NamedEntityMention(spans.toArray,text,concepts.reverse)
+                    new OntologyEntityMention(spans.toArray,text,concepts.reverse)
                 }
             }
 
@@ -54,15 +54,15 @@ abstract class BioASQNEEnhancer(serviceCall: String => FindEntityResult, source:
     }
 }
 
-class MeshEnhancer extends BioASQNEEnhancer((new BioASQServiceCall).getMeSHConcepts, OntologyConcept.SOURCE_MESH)
+class MeshEnhancer extends BioASQOEEnhancer((new BioASQService).getMeSHConcepts, OntologyConcept.SOURCE_MESH)
 
-class JochemEnhancer extends BioASQNEEnhancer((new BioASQServiceCall).getJochemConcepts, OntologyConcept.SOURCE_JOCHEM)
+class JochemEnhancer extends BioASQOEEnhancer((new BioASQService).getJochemConcepts, OntologyConcept.SOURCE_JOCHEM)
 
-class UniprotEnhancer extends BioASQNEEnhancer((new BioASQServiceCall).getUniprotConcepts, OntologyConcept.SOURCE_UNIPROT)
+class UniprotEnhancer extends BioASQOEEnhancer((new BioASQService).getUniprotConcepts, OntologyConcept.SOURCE_UNIPROT)
 
-class DoidEnhancer extends BioASQNEEnhancer((new BioASQServiceCall).getDoidConcepts, OntologyConcept.SOURCE_DOID)
+class DoidEnhancer extends BioASQOEEnhancer((new BioASQService).getDoidConcepts, OntologyConcept.SOURCE_DOID)
 
-class GoEnhancer extends BioASQNEEnhancer((new BioASQServiceCall).getGoConcepts, OntologyConcept.SOURCE_GO)
+class GoEnhancer extends BioASQOEEnhancer((new BioASQService).getGoConcepts, OntologyConcept.SOURCE_GO)
 
 
 
