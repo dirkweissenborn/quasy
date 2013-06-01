@@ -95,6 +95,7 @@ class FullClearNlpPipeline(val dictionaryFile:File,
 }
 
 object FullClearNlpPipeline{
+    var enhancer: FullClearNlpPipeline = null
     val LOG =  LogFactory.getLog(getClass)
 
     final val POS_MODEL_PROPERTY_NAME = "enhancer.clearnlp.pos.model"
@@ -107,37 +108,36 @@ object FullClearNlpPipeline{
 
 
     def fromConfiguration(properties:Properties):FullClearNlpPipeline = {
-        var enhancer: FullClearNlpPipeline = null
-        val posModelPath = properties.getProperty(POS_MODEL_PROPERTY_NAME)
-        val dictionaryPath = properties.getProperty(DICTIONARY_PROPERTY_NAME)
-        val depModelPath = properties.getProperty(DEP_MODEL_PROPERTY_NAME)
-        val srlModelPath = properties.getProperty(SRL_MODEL_PROPERTY_NAME)
-        val predModelPath = properties.getProperty(PRED_MODEL_PROPERTY_NAME)
-        val roleModelPath = properties.getProperty(ROLE_MODEL_PROPERTY_NAME)
-        val senseModelPath = properties.getProperty(SENSE_MODEL_PROPERTY_NAME)
+        if (enhancer == null) {
+            val posModelPath = properties.getProperty(POS_MODEL_PROPERTY_NAME)
+            val dictionaryPath = properties.getProperty(DICTIONARY_PROPERTY_NAME)
+            val depModelPath = properties.getProperty(DEP_MODEL_PROPERTY_NAME)
+            val srlModelPath = properties.getProperty(SRL_MODEL_PROPERTY_NAME)
+            val predModelPath = properties.getProperty(PRED_MODEL_PROPERTY_NAME)
+            val roleModelPath = properties.getProperty(ROLE_MODEL_PROPERTY_NAME)
+            val senseModelPath = properties.getProperty(SENSE_MODEL_PROPERTY_NAME)
 
+            if (  posModelPath != null &&
+                    dictionaryPath != null &&
+                    depModelPath != null &&
+                    srlModelPath != null &&
+                    roleModelPath != null &&
+                    senseModelPath != null &&
+                    predModelPath != null) {
 
-
-        if (  posModelPath != null &&
-                dictionaryPath != null &&
-                depModelPath != null &&
-                srlModelPath != null &&
-                roleModelPath != null &&
-                senseModelPath != null &&
-                predModelPath != null) {
-
-            enhancer = new FullClearNlpPipeline(
-                new File(dictionaryPath),
-                new File(posModelPath),
-                new File(depModelPath),
-                new File(predModelPath),
-                new File(srlModelPath),
-                new File(roleModelPath),
-                new File(senseModelPath))
-        }
-        else {
-            LOG.error("Couldn't find clear-nlp dependency model! Please check your configuration for parameter "+DEP_MODEL_PROPERTY_NAME+"!")
-            null
+                enhancer = new FullClearNlpPipeline(
+                    new File(dictionaryPath),
+                    new File(posModelPath),
+                    new File(depModelPath),
+                    new File(predModelPath),
+                    new File(srlModelPath),
+                    new File(roleModelPath),
+                    new File(senseModelPath))
+            }
+            else {
+                LOG.error("Couldn't find clear-nlp dependency model! Please check your configuration for parameter "+DEP_MODEL_PROPERTY_NAME+"!")
+                null
+            }
         }
         enhancer
     }

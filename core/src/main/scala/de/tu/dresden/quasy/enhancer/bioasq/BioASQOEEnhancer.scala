@@ -7,6 +7,7 @@ import collection.mutable._
 import org.apache.commons.logging.LogFactory
 import de.tu.dresden.quasy.webservices.bioasq.{BioASQService}
 import de.tu.dresden.quasy.webservices.bioasq.model.BioASQServiceResult
+import collection.immutable
 
 /**
  * @author dirk
@@ -37,7 +38,7 @@ abstract class BioASQOEEnhancer(serviceCall: String => BioASQServiceResult, sour
                             acc ++ List(span)
                     }).toList
 
-                    val concept = new OntologyConcept(source, finding.concept.label, finding.score, finding.concept.uri)
+                    val concept = new OntologyConcept(source, finding.concept.label,finding.concept.label,immutable.Set[String](), finding.score, finding.concept.uri)
                     var concepts = ontologyConcepts.getOrElse(spans,List[OntologyConcept]())
                     concepts ::= concept
                     ontologyConcepts += (spans -> concepts)

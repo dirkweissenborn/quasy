@@ -1,6 +1,6 @@
 package de.tu.dresden.quasy.enhancer
 
-import de.tu.dresden.quasy.model.AnnotatedText
+import de.tu.dresden.quasy.model.{PosTag, AnnotatedText}
 import de.tu.dresden.quasy.model.annotation.OntologyEntityMention
 
 /**
@@ -22,9 +22,8 @@ class OntologyEntitySelector(threshold:Double, source:String = "") extends TextE
 
         val groupedOes = oes.groupBy(_.spans.size > 1)
 
-        text.removeAllAnnotations[OntologyEntityMention]
+        text.removeAllAnnotationsOfType[OntologyEntityMention]
         //Just keep entity mentions with one span for now
-        //TODO also use OEs over more than one span
         if (groupedOes.contains(false)) {
             val selectedOes = groupedOes(false).sortBy(-_.coveredText.length).foldLeft(List[OntologyEntityMention]())((accOes,oe) => {
                 // check if previous OE mentions has overlaps with the current OE mention
@@ -36,5 +35,24 @@ class OntologyEntitySelector(threshold:Double, source:String = "") extends TextE
 
             selectedOes.foreach(oe => text.addAnnotation(oe))
         }
+
+        /*val annotations = text.getAnnotations[OntologyEntityMention]
+
+        if (groupedOes.contains(true)) {
+            val selectedOes = groupedOes(true).sortBy(-_.coveredText.length).foldLeft(List[OntologyEntityMention]())((accOes,oe) => {
+                // check if previous OE mentions has overlaps with current OE mention
+                if (!accOes.exists(accOe => oe.spans.foldLeft(false)( (contains, span) => contains || accOe.contains(span.begin,span.end) )) &&
+                    !annotations.exists(annotation => oe.spans.foldLeft(false)( (contains, span) => contains || annotation.contains(span.begin,span.end) ))
+                )
+                    oe :: accOes
+                else
+                    accOes
+            })
+
+            selectedOes.foreach(oe =>
+                if(oe.getTokens.exists(_.posTag.matches(PosTag.ANYNOUN_PATTERN)))
+                    text.addAnnotation(oe)
+            )
+        }*/
     }
 }

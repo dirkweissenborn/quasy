@@ -17,7 +17,7 @@ import edu.stanford.nlp.dcoref.CorefChain
  */
 object CorefStanfordEnhancer extends TextEnhancer{
     private val props: Properties = new Properties
-    props.put("annotators", "pos, lemma, parse, ner, dcoref")
+    props.put("annotators", "tokenize, ssplit, pos, lemma, parse, regexner, ner, dcoref")
 
     private val pipeline = new StanfordCoreNLP(props)
 

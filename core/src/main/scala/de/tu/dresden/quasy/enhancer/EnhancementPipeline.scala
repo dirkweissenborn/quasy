@@ -1,12 +1,18 @@
 package de.tu.dresden.quasy.enhancer
 
+import clearnlp.FullClearNlpPipeline
 import java.io.{FileWriter, File}
 import de.tu.dresden.quasy.model.AnnotatedText
 import actors.Future
 import de.tu.dresden.quasy.util.Xmlizer
-import de.tu.dresden.quasy.io.AnnotatedTextSource
+import de.tu.dresden.quasy.io.AnnotatedTextSource.AnnotatedTextSource
 import collection.mutable._
+import opennlp.OpenNlpChunkEnhancer
 import org.apache.commons.logging.LogFactory
+import java.util.Properties
+import regex.RegexAcronymEnhancer
+import stanford.FullStanfordNlpEnhancer
+import gopubmed.GopubmedAnnotator
 
 /**
  * @author dirk
@@ -76,6 +82,7 @@ class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
                             next.get(enhancer) match {
                                 case Some(nextEnhancer) => assignedTexts(nextEnhancer) = text
                                 case None => {
+                                    text.deleteDuplicates
                                     if (writeOut) {
                                         val fw = new FileWriter(new File(outputDir,text.id+".xml"))
                                         fw.write(Xmlizer.toXml(text))
@@ -152,5 +159,18 @@ class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
             }
         }
     }
+}
 
+object EnhancementPipeline {
+    def getFullPipeline(configuration: Properties, stanford: Boolean = false) = {
+        var lexicalEnhancer: TextEnhancer = null
+        if (stanford)
+            lexicalEnhancer = new FullStanfordNlpEnhancer
+        else
+            lexicalEnhancer = FullClearNlpPipeline.fromConfiguration(configuration)
+
+        val chunker = OpenNlpChunkEnhancer.fromConfiguration(configuration)
+
+        new EnhancementPipeline(List(lexicalEnhancer, chunker, new GopubmedAnnotator, RegexAcronymEnhancer, new OntologyEntitySelector(0.1))) //, new UniprotEnhancer, new DoidEnhancer, new GoEnhancer))//, new JochemEnhancer))
+    }
 }

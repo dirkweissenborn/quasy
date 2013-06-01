@@ -47,7 +47,7 @@
 
     <dependency>
       <groupId>pitt.search</groupId>
-      <artifactId>lucene</artifactId>
+      <artifactId>semantic-vectors</artifactId>
       <version>3.8</version>
       <scope>system</scope>
       <systemPath>${libpath}/semanticvectors-3.8.jar</systemPath>

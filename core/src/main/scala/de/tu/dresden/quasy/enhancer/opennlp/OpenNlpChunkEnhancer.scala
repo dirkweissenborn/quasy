@@ -38,23 +38,48 @@ class OpenNlpChunkEnhancer(val modelFile:File) extends TextEnhancer{
             val tags = sentence.getTokens.map(_.posTag)
 
             val chunks = chunker.chunkAsSpans(tokens.map(_.coveredText).toArray,tags.toArray)
-            chunks.foreach(chunk => new Chunk(tokens(chunk.getStart).begin,tokens(chunk.getEnd-1).end,text,chunk.getType))
+            val acc = chunks.sortBy(_.getStart).foldLeft(List[opennlp.tools.util.Span]())((acc,chunk) => {
+                if(acc.isEmpty) {
+                    chunk :: acc
+                } else {
+                    if(acc.head.getType.equals(chunk.getType)) {
+                        chunk :: acc
+                    }
+                    else {
+                        new Chunk(tokens(acc.last.getStart).begin,tokens(acc.head.getEnd-1).end,text,acc.head.getType)
+                        List[opennlp.tools.util.Span](chunk)
+                    }
+                }
+            })
+            new Chunk(tokens(acc.last.getStart).begin,tokens(acc.head.getEnd-1).end,text,acc.head.getType)
+            /*chunks.foreach(chunk => {
+                try {
+                    new Chunk(tokens(chunk.getStart).begin,tokens(chunk.getEnd-1).end,text,chunk.getType)
+                } catch {
+                    case e => e.printStackTrace()
+                }
+            }) */
+
         })
     }
 }
 
 object OpenNlpChunkEnhancer {
+    var enhancer: OpenNlpChunkEnhancer = null
     val LOG =  LogFactory.getLog(getClass)
 
     final val MODEL_PROPERTY_NAME = "enhancer.opennlp.chunk.model"
 
     def fromConfiguration(properties:Properties):OpenNlpChunkEnhancer = {
-        val modelPath = properties.getProperty(MODEL_PROPERTY_NAME)
-       if (modelPath!=null)
-           new OpenNlpChunkEnhancer(new File(modelPath))
-       else {
-           LOG.error("Couldn't find opennlp chunker model! Please check your configuration for parameter "+MODEL_PROPERTY_NAME+"!")
-           null
-       }
+        if (enhancer == null) {
+            val modelPath = properties.getProperty(MODEL_PROPERTY_NAME)
+            if (modelPath!=null)
+                enhancer = new OpenNlpChunkEnhancer(new File(modelPath))
+            else {
+                LOG.error("Couldn't find opennlp chunker model! Please check your configuration for parameter "+MODEL_PROPERTY_NAME+"!")
+                null
+            }
+        }
+        enhancer
     }
 }

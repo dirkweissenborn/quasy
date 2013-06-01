@@ -2,13 +2,14 @@ package de.tu.dresden.quasy.run
 
 import java.io.{FileInputStream, File}
 import java.util.Properties
-import de.tu.dresden.quasy.io.{AnnotatedTextSource, PlainTextSource}
+import de.tu.dresden.quasy.io.AnnotatedTextSource._
 import de.tu.dresden.quasy.enhancer.clearnlp.{FullClearNlpPipeline}
 import de.tu.dresden.quasy.enhancer.opennlp.OpenNlpChunkEnhancer
-import de.tu.dresden.quasy.enhancer.{OntologyEntitySelector, NounalRelationEnhancer, TextEnhancer, EnhancementPipeline}
-import de.tu.dresden.quasy.enhancer.bioasq._
+import de.tu.dresden.quasy.enhancer.{ TextEnhancer, EnhancementPipeline}
 import de.tu.dresden.quasy.enhancer.stanford.FullStanfordNlpEnhancer
-import de.tu.dresden.quasy.enhancer.transinsight.TransinsightAnnotator
+import de.tu.dresden.quasy.enhancer.gopubmed.GopubmedAnnotator
+import de.tu.dresden.quasy.io.AnnotatedTextSource
+import de.tu.dresden.quasy.io.AnnotatedTextSource.AnnotatedTextSource
 
 /**
  * @author dirk
@@ -17,7 +18,7 @@ import de.tu.dresden.quasy.enhancer.transinsight.TransinsightAnnotator
  */
 object RunFullPipeline {
 
-   main(Array("corpus/question_corpus1000.txt","annotations/question_corpus1000","conf/configuration.properties"))
+   //main(Array("corpus/question_corpus1000.txt","annotations/question_corpus1000","conf/configuration.properties"))
 
     def main(args:Array[String]) {
         if (args.size < 3) {
@@ -42,7 +43,7 @@ object RunFullPipeline {
             def reset {}
         }  */
 
-        run(PlainTextSource.fromFile(inputFile),outputDir,props)
+        run(AnnotatedTextSource.fromFile(inputFile),outputDir,props)
     }
 
 
@@ -59,6 +60,6 @@ object RunFullPipeline {
 
         val chunker = OpenNlpChunkEnhancer.fromConfiguration(configuration)
 
-        new EnhancementPipeline(List(lexicalAnnotation, chunker, new TransinsightAnnotator, new OntologyEntitySelector(0.1))) //, new UniprotEnhancer, new DoidEnhancer, new GoEnhancer))//, new JochemEnhancer))
+        new EnhancementPipeline(List(lexicalAnnotation, chunker, new GopubmedAnnotator))//, new OntologyEntitySelector(0.1))) //, new UniprotEnhancer, new DoidEnhancer, new GoEnhancer))//, new JochemEnhancer))
     }
 }

@@ -14,7 +14,7 @@ import de.tu.dresden.quasy.model.annotation.{Sentence, Token}
 object WordnetSimilarity extends SimilarityMeasure{
     private val db = new NictWordNet
 
-    def wordSimilarity(word1: String, word2: String) = {
+    def tokenSimilarity(word1: String, word2: String) = {
         WS4JConfiguration.getInstance.setMFS(true)
         val measure = new WuPalmer(db)
         math.min(measure.calcRelatednessOfWords(word1, word2),1.0)
@@ -38,5 +38,5 @@ object WordnetSimilarity extends SimilarityMeasure{
 
     def sentenceSimilarity(sentence1: Sentence, sentence2: Sentence) = phraseSimilarity(sentence1.getTokens.toArray, sentence2.getTokens.toArray)
 
-    def tokenSimilarity(token1: Token, token2: Token) = wordSimilarity(token1.lemma,token2.lemma)
+    def tokenSimilarity(token1: Token, token2: Token) = tokenSimilarity(token1.lemma,token2.lemma)
 }

@@ -13,4 +13,8 @@ class SemanticVectorsSimilarity extends SimilarityMeasure{
     def phraseSimilarity(sentence1: Array[Token], sentence2: Array[Token]) = 0.0
 
     def sentenceSimilarity(sentence1: Sentence, sentence2: Sentence) = 0.0
+
+    def tokenSimilarity(token1: String, token2: String) = 0.0
+
+    def phraseSimilarity(sentence1: Array[String], sentence2: Array[String]) = 0.0
 }

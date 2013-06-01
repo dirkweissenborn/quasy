@@ -1,6 +1,6 @@
 package de.tu.dresden.quasy.dependency
 
-import de.tu.dresden.quasy.model.annotation.{Sentence}
+import de.tu.dresden.quasy.model.annotation.{Token, Sentence}
 import com.thoughtworks.xstream.InitializationException
 import scalax.collection.GraphTraversal.VisitorReturn
 import scalax.collection.Graph
@@ -25,6 +25,10 @@ class DependencyTree(val graph:Graph[DepNode,DepEdge])  {
         var edges = List[DepEdge[DepNode]]()
         graph.get(node).traverse()(node => VisitorReturn.Continue, edge => edges ::= edge.toEdgeIn)
         Graph.from(List[DepNode](node), edges)
+    }
+
+    def getDepNode(token:Token) = {
+        graph.nodes.find(_.value.asInstanceOf[DepNode].nodeHead.equals(token))
     }
 
     def matchTreeToTemplate(template: Graph[(String,Int),LDiEdge]) = {
@@ -90,48 +94,6 @@ object DependencyTree {
         })
 
         new DependencyTree(Graph.from(nodes, edges.filterNot(_ == null)))
-    }
-
-    /*/TODO a little bit HACKY
-    def buildTemplate(edges:LDiEdge[(String,Int)]{type L1 = String}*) = {
-        val context = new AnnotatedText("")
-        val nodes = Map(edges.flatMap(edge => Set(edge.from,edge.to)).map{
-            case (lemmaRegex,position) => {
-                context.text += " "+lemmaRegex
-                ((lemmaRegex,position) -> new TemplateDepNode(new Token(context.text.length-lemmaRegex.length,context.text.length,context,position)))
-            }}:_*)
-
-        DependencyTree(edges.map(edge => {
-            val from = nodes(edge.from)
-            val to = nodes(edge.to)
-            to.nodeHead.depTag = new DepTag(edge.label.toString, from.nodeHead.position)
-            DepTemplateEdge(from,to,edge.label.toString)
-        }):_*)
-    }*/
-
-    def greedySubtreeSimilarity(currentRoot1:DepNode, currentRoot2:DepNode):Double = {
-       0.0
-    }
-
-    def greedySimilarityDistance(tree1:DependencyTree, tree2:DependencyTree) = 1 - greedySimilarity(tree1,tree2)
-
-    def greedySimilarity(tree1:DependencyTree, tree2:DependencyTree):Double = {
-       0.0
-    }
-
-    private def calculateSimilarities(nodes1:List[DepNode], nodes2:List[DepNode]) = {
-         0.0
-    }
-
-    private def calculateWeightingFactor(node1:DepNode,node2:DepNode) =
-        1.0/math.pow(2,(node1.nodeHead.depDepth+node2.nodeHead.depDepth)/2.0)
-
-    def checkEquality(tree1:DependencyTree, tree2:DependencyTree, equal: (DepNode,DepNode) => Boolean, toDepth:Int = Int.MaxValue):Boolean = {
-        checkEquality(tree1.root,tree2.root,equal,toDepth)
-    }
-
-    def checkEquality(root1:DepNode, root2:DepNode, equal: (DepNode,DepNode) => Boolean, toDepth:Int):Boolean = {
-        false
     }
 
 }

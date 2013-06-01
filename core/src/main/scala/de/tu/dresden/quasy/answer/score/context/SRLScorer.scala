@@ -1,6 +1,6 @@
-package de.tu.dresden.quasy.answer.score
+package de.tu.dresden.quasy.answer.score.context
 
-import de.tu.dresden.quasy.answer.model.AnswerCandidate
+import de.tu.dresden.quasy.answer.model.AnswerContext
 import de.tu.dresden.quasy.model.annotation.Token
 import de.tu.dresden.quasy.similarity.SimilarityMeasure
 import util.matching.Regex
@@ -10,14 +10,14 @@ import util.matching.Regex
  * Date: 4/30/13
  * Time: 3:01 PM
  */
-class SRLScorer(similarityMeasure: SimilarityMeasure) extends Scorer {
+class SRLScorer(similarityMeasure: SimilarityMeasure) extends AnswerContextScorer {
 
     //TODO CHECK
     final val weights = Map[Regex,Double]( ("A[1-2]".r -> 1.0), ("A[3-4A]".r -> 0.8), ("AM.*".r -> 0.5))
 
-    def score(candidate: AnswerCandidate) = {
-        val questionSrls = candidate.question.getTokens.flatMap(_.getRelationsAsString)
-        val answerSrls = candidate.answer.getTokens.flatMap(_.getRelationsAsString)
+    def score(candidate: AnswerContext) = {
+        val questionSrls = candidate.question.getTokens.flatMap(_.prettyPrintRelations)
+        val answerSrls = candidate.answerContext.getTokens.flatMap(_.prettyPrintRelations)
         var normalizer = 0.0
 
         /*questionSrls.map{

@@ -1,11 +1,14 @@
 package de.tu.dresden.quasy.webservices.bioasq
 
-import model.{FindEntityRequest, DocumentsResult, LinkedLifeTriples, BioASQServiceResult}
+import model._
+import model.BioASQServiceResult
+import model.FindEntityRequest
+import model.LinkedLifeTriples
 import org.apache.commons.logging.LogFactory
 import com.google.gson.{Gson, JsonObject, JsonParser}
 import org.apache.commons.httpclient.{HttpException, HttpClient}
 import org.apache.commons.httpclient.methods.{PostMethod, GetMethod}
-import java.net.HttpURLConnection
+import java.net.{URL, HttpURLConnection}
 import scala.RuntimeException
 import scala.StringBuilder
 import org.apache.commons.httpclient.methods.multipart.{Part, MultipartRequestEntity, StringPart}
@@ -27,6 +30,7 @@ class BioASQService {
     final val LINKEDLIFE_URL = "http://www.gopubmed.org/web/bioasq/linkedlifedata2/triples"
 
     final val PMC_URL = "http://www.gopubmed.org/web/bioasq/pmc/json"
+    final val PUBMED_URL = "http://gopubmed.org/web/gopubmedbeta/bioasq/pubmed"
 
     private final val LOG = LogFactory.getLog(getClass)
     private final val jsonParser = new JsonParser
@@ -38,11 +42,16 @@ class BioASQService {
         val targetUrl: String = getTargetUrl(url)
         var requestObjects:Array[Any] = Array(query)
         if (nr > 0)
-            requestObjects ++= Array(1,nr)
+            requestObjects ++= Array(0,nr)
+
 
         //LOG.info("Query-url: "+url+"  - findEntities=\""+queryString+"\"")
 
-        val request = FindEntityRequest(requestObjects)
+        val request =
+            if (url.equals(PUBMED_URL))
+                FindPubMedCitationsRequest(requestObjects)
+            else
+                FindEntityRequest(requestObjects)
 
         val searchJsonQuery: String = gson.toJson(request)
         //System.out.println("Query becomes:\n" + searchJsonQuery)
@@ -79,6 +88,10 @@ class BioASQService {
 
     def getPmcDocuments(query: String, nr:Int) = {
         getEntityConcepts[DocumentsResult](query,PMC_URL,nr)
+    }
+
+    def getPubmedDocuments(query: String, nr:Int) = {
+        getEntityConcepts[DocumentsResult](query,PUBMED_URL,nr)
     }
 
     private def getTargetUrl(url: String): String = {
@@ -148,13 +161,15 @@ object BioASQService {
     def main(args: Array[String]) {
         val service = new BioASQService
         //httpClient.getParams.setAuthenticationPreemptive(true)
-        service.getMeSHConcepts("Drugs that bind to but do not activate SEROTONIN 5-HT1 RECEPTORS, thereby blocking the actions of SEROTONIN 5-HT1 RECEPTOR AGONISTS. Included under this heading are antagonists for one or more of the specific 5-HT1 receptor subtypes.")
+        //service.getMeSHConcepts("Drugs that bind to but do not activate SEROTONIN 5-HT1 RECEPTORS, thereby blocking the actions of SEROTONIN 5-HT1 RECEPTOR AGONISTS. Included under this heading are antagonists for one or more of the specific 5-HT1 receptor subtypes.")
         /*getGoConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getUniprotConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getJochemConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getDoidConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")*/
         //service.getLinkedLifeTriples("Dextrose")
-        //service.getPmcDocuments("What is the role of thyroid hormones administration in the treatment of heart failure?",10)
+        val res = service.getPubmedDocuments("DNMT3 proteins plants",200)
+        val doc = res.documents.find(_.pmid.equals("1563036"))
         System.exit(0)
     }
 }
+

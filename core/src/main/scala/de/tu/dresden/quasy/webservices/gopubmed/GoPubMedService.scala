@@ -1,4 +1,4 @@
-package de.tu.dresden.quasy.webservices.transinsight
+package de.tu.dresden.quasy.webservices.gopubmed
 
 import org.apache.commons.logging.LogFactory
 import com.google.gson.{JsonObject, Gson, JsonParser}
@@ -14,7 +14,7 @@ import de.tu.dresden.quasy.model.Span
  * Date: 5/8/13
  * Time: 2:03 PM
  */
-class TransinsightService {
+class GoPubMedService {
 
     private final val url = "http://www.gopubmed.org/web/annotate/webservice/annotate"
 
@@ -88,10 +88,10 @@ class TransinsightService {
     case class ServiceRequest(val text:String)
 }
 
-object TransinsightService {
+object GoPubMedService {
     def main(args:Array[String]) {
-        val service = new TransinsightService
-        val result = service.getEntityConcepts("Does change in blood pressure predict heart disease")
+        val service = new GoPubMedService
+        val result = service.getEntityConcepts("Disease patterns in RA vary between the sexes; the condition is more commonly seen in women, who exhibit a more aggressive disease and a poorer long-term outcome.")
         result
     }
 }

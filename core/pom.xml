@@ -157,6 +157,25 @@
       <version>0.4.7</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-analyzers</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>pitt.search</groupId>
+      <artifactId>semantic-vectors</artifactId>
+      <version>3.8</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/semanticvectors-3.8.jar</systemPath>
+    </dependency>
+
+
   </dependencies>
 
   <build>

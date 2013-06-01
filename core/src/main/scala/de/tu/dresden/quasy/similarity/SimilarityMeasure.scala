@@ -17,4 +17,8 @@ trait SimilarityMeasure {
     def phraseSimilarity(sentence1: Array[Token], sentence2: Array[Token]) : Double
 
     def sentenceSimilarity(sentence1: Sentence, sentence2: Sentence):Double
+
+    def tokenSimilarity(token1: String, token2: String) : Double
+
+    def phraseSimilarity(sentence1: Array[String], sentence2: Array[String]) : Double
 }

@@ -20,29 +20,8 @@ class DepNode(var tokens:List[Token], var nodeHead:Token, var optional:Boolean =
     def getLabel = tokens.map(_.lemma).mkString(" ")
 
     override def equals(obj:Any) = obj match {
-        case templateNode:TemplateDepNode => {
-            templateNode.equals(this)
-        }
         case depNode:DepNode => {
             this.tokens.equals(depNode.tokens)  && depNode.nodeHead.equals(this.nodeHead)
-        }
-        case _ => false
-    }
-}
-
-class TemplateDepNode(val templateToken:Token, optional:Boolean = false) extends DepNode(List(templateToken),templateToken,optional) {
-    private val tagRegex = nodeHead.depTag.tag.r
-
-    override def equals(obj:Any)  = obj match {
-        case templNode:TemplateDepNode => templateToken.equals(templNode.templateToken)
-        case depNode:DepNode => {
-            val matching = tagRegex.findFirstIn(depNode.nodeHead.depTag.tag).isDefined
-
-            if (matching) {
-                tokens = depNode.tokens
-                nodeHead = depNode.nodeHead
-            }
-            matching
         }
         case _ => false
     }

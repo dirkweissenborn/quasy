@@ -26,10 +26,7 @@ object PrintNEAnnotations {
                     c.source
                 }).mkString(",")+"]\t")
             })
-            text.getAnnotations[Chunk].foreach(chunk => {
-                if(chunk.getTokens.size > 1)
-                    print(chunk.coveredText+"["+chunk.chunkType+"]\t")
-            })
+
             println()
             println()
         })

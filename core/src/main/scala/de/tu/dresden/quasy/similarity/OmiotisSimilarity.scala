@@ -34,7 +34,7 @@ object OmiotisSimilarity extends SimilarityMeasure {
         0.0
     }
 
-    def wordSimilarity(word1: String, word2: String):Double = {
+    def tokenSimilarity(word1: String, word2: String):Double = {
         try {
             return port.termRelatedness(word1,word2)
         }
@@ -49,5 +49,5 @@ object OmiotisSimilarity extends SimilarityMeasure {
 
     def sentenceSimilarity(sentence1: Sentence, sentence2: Sentence) = phraseSimilarity(sentence1.getTokens.toArray, sentence2.getTokens.toArray)
 
-    def tokenSimilarity(token1: Token, token2: Token) = wordSimilarity(token1.lemma,token2.lemma)
+    def tokenSimilarity(token1: Token, token2: Token) = tokenSimilarity(token1.lemma,token2.lemma)
 }

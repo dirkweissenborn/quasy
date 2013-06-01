@@ -1,8 +1,10 @@
 package de.tu.dresden.quasy.answer.fetch
 
 import de.tu.dresden.quasy.model.AnnotatedText
-import de.tu.dresden.quasy.answer.model.AnswerCandidate
-import de.tu.dresden.quasy.model.annotation.Question
+import de.tu.dresden.quasy.answer.model.AnswerContext
+import de.tu.dresden.quasy.model.annotation.{Section, Question}
+import de.tu.dresden.quasy.enhancer.EnhancementPipeline
+import de.tu.dresden.quasy.io.AnnotatedTextSource
 
 /**
  * @author dirk
@@ -11,6 +13,27 @@ import de.tu.dresden.quasy.model.annotation.Question
  */
 trait CandidateFetcher {
 
-    def fetch(question:Question, docCount:Int) : List[AnswerCandidate]
+    def fetch(question:Question, docCount:Int, pipeline:EnhancementPipeline) : List[AnswerContext]
+
+    protected def extractAnswerCandidates(answerTexts: Array[AnnotatedText], question: Question, pipeline: EnhancementPipeline): List[AnswerContext] = {
+        if (pipeline != null)
+            pipeline.process(AnnotatedTextSource(answerTexts: _*))
+        else {
+            answerTexts.foreach(text => {
+                var sectionOffset = 0
+                text.text.split("[\n\r]").foreach(sectionString => {
+                    if (sectionString != "") {
+                        sectionOffset = text.text.indexOf(sectionString, sectionOffset)
+                        new Section(sectionOffset, sectionOffset + sectionString.length, text)
+                    }
+                    sectionOffset += sectionString.length
+                })
+            })
+        }
+
+        answerTexts.flatMap(_.getAnnotations[Section].map(section => {
+            new AnswerContext(section, question)
+        })).toList
+    }
 
 }
