@@ -6,7 +6,7 @@ import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.model.annotation.{Token, Sentence, Section}
 
 /**
- * @author: dirk
+ * @author dirk
  * Date: 4/19/13
  * Time: 5:16 PM
  */

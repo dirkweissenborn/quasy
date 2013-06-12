@@ -14,8 +14,9 @@ object RegexAcronymEnhancer extends TextEnhancer{
 
     def enhance(text: AnnotatedText) {
         text.getAnnotations[Token].filter(t => t.posTag.matches(PosTag.ANYNOUN_PATTERN) && t.coveredText.matches(pattern)).foreach(t => {
-            new OntologyEntityMention(t.begin,t.end,t.context,
-                List(new OntologyConcept(OntologyConcept.SOURCE_ACRONYM,t.coveredText.toUpperCase,t.coveredText.toUpperCase,Set[String](),0.5)))
+            if (!text.getAnnotations[OntologyEntityMention].exists(_.contains(t.begin,t.end)))
+                new OntologyEntityMention(t.begin,t.end,t.context,
+                    List(new OntologyConcept(OntologyConcept.SOURCE_ACRONYM,t.coveredText.toUpperCase,t.coveredText.toUpperCase,Set[String](),0.5)))
         })
     }
 }

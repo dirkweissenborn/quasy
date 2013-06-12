@@ -8,10 +8,10 @@ import de.tu.dresden.quasy.model.annotation.OntologyEntityMention
  * Date: 5/29/13
  * Time: 12:43 PM
  */
-class ConceptProminenceScorer(answerContexts:List[AnswerContext]) extends FactoidScorer{
-    private val oems = answerContexts.flatMap(ctxt => ctxt.answerContext.context.getAnnotationsBetween[OntologyEntityMention](ctxt.answerContext.begin,ctxt.answerContext.end))
+class ConceptProminenceScorer(answerContexts:List[AnswerContext]) extends FactoidScorer {
+    private val oems = answerContexts.map(ctxt => ctxt.answerContext.context.getAnnotationsBetween[OntologyEntityMention](ctxt.answerContext.begin,ctxt.answerContext.end))
 
-    protected[factoid] def scoreInternal(factoid: FactoidAnswer) = {
-        oems.count(_.ontologyConcepts.exists(_.equals(factoid.answer))).toDouble / oems.size
+    def scoreInternal(factoid: FactoidAnswer) = {
+        oems.count(_.flatMap(_.ontologyConcepts).exists(_.equals(factoid.answer))).toDouble / oems.size
     }
 }

@@ -14,6 +14,7 @@ import de.tu.dresden.quasy.io.AnnotatedTextSource
 trait CandidateFetcher {
 
     def fetch(question:Question, docCount:Int, pipeline:EnhancementPipeline) : List[AnswerContext]
+    def fetchByPmid(question: Question, pmids:List[Int], pipeline:EnhancementPipeline = null) : List[AnswerContext]
 
     protected def extractAnswerCandidates(answerTexts: Array[AnnotatedText], question: Question, pipeline: EnhancementPipeline): List[AnswerContext] = {
         if (pipeline != null)

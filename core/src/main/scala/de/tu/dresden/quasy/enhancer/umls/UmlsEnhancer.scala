@@ -3,13 +3,14 @@ package de.tu.dresden.quasy.enhancer.umls
 import gov.nih.nlm.nls.skr.GenericObject
 import de.tu.dresden.quasy.enhancer.TextEnhancer
 import de.tu.dresden.quasy.model.{Span, AnnotatedText}
-import de.tu.dresden.quasy.model.annotation.{SemanticRelationAnnotation, OntologyEntityMention, UmlsConcept}
+import de.tu.dresden.quasy.model.annotation.{Token, SemanticRelationAnnotation, OntologyEntityMention, UmlsConcept}
 import de.tu.dresden.quasy.util.Xmlizer
 import java.io._
 import org.apache.http.entity.mime.content.FileBody
 import java.nio.charset.Charset
 import org.apache.commons.logging.LogFactory
 import java.text.Normalizer
+import io.Source
 
 /**
  * @author dirk
@@ -19,6 +20,7 @@ import java.text.Normalizer
 object UmlsEnhancer extends TextEnhancer {
     private final val LOG = LogFactory.getLog(getClass)
 
+    private final val allowedSTypes = "acab,amas,aapp,anab,anst,antb,biof,bacs,blor,bpoc,carb,crbs,cell,celc,celf,comd,chem,chvf,chvs,clnd,cgab,diap,dsyn,drdd,eico,elii,emst,enzy,food,ffas,fngs,gngp,gngm,genf,hops,horm,inpo,inch,lipd,mobd,moft,mosq,neop,nsba,nnon,nusq,ortf,orch,opco,phsu,rcpt,sosy,strd,sbst,virs,vita".split(",")
     /*
 00000000|MM|68.24|Opioids|C0242402|[hops,orch,phsu]|["Opioid"-tx-3-"opioid","Opioid"-tx-2-"opioid","Opioid"-tx-1-"opioid"]|TX|286:6|185:6|84:6|D27.505.696.663.850.014.520;D27.505.954.427.040.325;D27.505.954.427.210.049
 00000000|MM|20.83|Patients|C0030705|[podg]|["Patients"-tx-3-"patients","Patients"-tx-2-"patients","Patients"-tx-1-"patients"]|TX|256:8|155:8|54:8|M01.643
@@ -32,8 +34,7 @@ object UmlsEnhancer extends TextEnhancer {
      */
 
     def enhance(text: AnnotatedText) {
-        val asciiText =
-            Normalizer.normalize(text.text, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "")
+        val asciiText = text.text
 
         val maxLength = 9900
         var last = asciiText
@@ -51,28 +52,35 @@ object UmlsEnhancer extends TextEnhancer {
 
         texts.foreach(asciiText => {
             val resultStr = requestSemRep(asciiText+"\n")
-            var NEs = List[OntologyEntityMention]()
+            //var NEs = List[OntologyEntityMention]()
             resultStr.split("""\n""").foreach( line => {
                 val split = line.split("""\|""")
 
                 if (split.size > 8 && split(1)=="MM") {
                     val cui = split(4)
-                    val tuis = split(5).substring(1, split(5).length-1)
-                    val spans = split.drop(8).takeWhile(_.matches("([0-9]+:[0-9]+,?)+")).flatMap(_.split(",")).map(spanStr => {
-                        val Array(begin,length) = spanStr.split(":",2)
-                        (begin.toInt,length.toInt)
-                    })
-
-                    val treeNrs = if(split.last.matches("[A-Z][0-9.]*")) split.last.split(";") else Array[String]()
-                        val concept = new UmlsConcept(cui, split(3),Set[String](),tuis.split(","),treeNrs,split(2).toDouble)
+                    val tuis = split(5).substring(1, split(5).length-1).split(",").filter(allowedSTypes.contains)
+                    if(tuis.length > 0) {
+                        val treeNrs = if(split.last.matches("[A-Z][0-9.]*")) split.last.split(";") else Array[String]()
+                        val concept = new UmlsConcept(cui, split(3),Set[String](),tuis,treeNrs,split(2).toDouble)
                         try {
-                            spans.foreach {
-                                case (begin,length) => NEs ::= new OntologyEntityMention(Array(new Span(offset+begin,offset+begin+length)), text, List(concept))
-                            }
+                            split.drop(8).takeWhile(_.matches("([0-9]+:[0-9]+,?)+")).map(spanStr => spanStr.split(",")).foreach(spanStrs =>{
+                                val spans = spanStrs.map(spanStr => {
+                                    val Array(beginS,lengthS) = spanStr.split(":",2)
+                                    val begin = beginS.toInt
+                                    val end = begin + lengthS.toInt
+                                    val beginToken = text.getAnnotations[Token].find(_.contains(offset+begin,offset+begin)).get
+                                    val endToken = text.getAnnotations[Token].find(_.contains(offset+end,offset+end)).get
+
+                                    new Span(beginToken.begin,endToken.end)
+                                })
+                                //NEs ::=
+                                new OntologyEntityMention(spans, text, List(concept))
+                            })
                         }
                         catch {
                             case e =>
                         }
+                    }
                 }
                 /*if (split.size > 5 && split(5).equals("text")) {
                     offset = asciiText.indexOf(split(6),offset+1)
@@ -109,56 +117,85 @@ object UmlsEnhancer extends TextEnhancer {
         })
     }
 
+    private val mm = new File("mm.cache")
+    mm.createNewFile()
+    private val cacheSep = "\n"+("#"*30)+"\n"
+    private var cache = {
+        val cacheStr = Source.fromFile(mm).getLines().mkString("\n")
+        val entries = cacheStr.split(cacheSep)
+
+        (0 until (entries.size / 2)).map(i => {
+            (entries(i*2),entries(i*2+1))
+        }).toMap
+    }
+
     def requestSemRep(text:String):String = {
-        var results = ""
+        var results = cache.getOrElse(text, "")
 
-        //myGenericObj.setField("Batch_Command", "semrep -D")
-        //myGenericObj.setField("SilentEmail", true)
-        //myGenericObj.setFileField("UpLoad_File", filename)
-        try {
-            val username = System.getProperty("umlsUsername")
-            val password = System.getProperty("umlsPassword")
-            val email = System.getProperty("umlsEmail")
-            //val myGenericObj = new GenericObject(200,username, password)
-            val myGenericObj = if(text.size > 10000) new GenericObject(username, password) else new GenericObject(100,username, password)
-
-            //TODO read from properties
-            myGenericObj.setField("Email_Address", email)
-
-            if(text.size > 10000) {
-                val pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream("./batch.txt"),"US-ASCII"))
-                pw.print(text)
-                pw.close()
-                myGenericObj.setField("SilentEmail", true)
-                myGenericObj.setFileField("UpLoad_File", "./batch.txt")
-                myGenericObj.setField("Batch_Command", "metamap -AlN -J acab,amas,aapp,anab,anst,antb,biof,bacs,blor,bpoc,carb,crbs,cell,celc,celf,comd,chem,chvf,chvs,clna,clnd,cgab,diap,dsyn,drdd,eico,elii,emst,enzy,food,ffas,fngs,gngp,gngm,genf,geoa,hops,horm,inpo,inch,lipd,menp,mobd,moft,mosq,neop,nsba,nnon,nusq,ortf,orch,opco,phsu,rcpt,sosy,strd,sbst,virs,vita --prune 10 -V Base")
-            }
-            else {
-                myGenericObj.setField("APIText", text)
-                myGenericObj.setField("KSOURCE", "1213")
-                myGenericObj.setField("COMMAND_ARGS", """-AlN -J acab,amas,aapp,anab,anst,antb,biof,bacs,blor,bpoc,carb,crbs,cell,celc,celf,comd,chem,chvf,chvs,clna,clnd,cgab,diap,dsyn,drdd,eico,elii,emst,enzy,food,ffas,fngs,gngp,gngm,genf,geoa,hops,horm,inpo,inch,lipd,menp,mobd,moft,mosq,neop,nsba,nnon,nusq,ortf,orch,opco,phsu,rcpt,sosy,strd,sbst,virs,vita --prune 10 -V Base""")
-            }
-
-            // Submit the job request
+        if(results.equals("")) {
+            //myGenericObj.setField("Batch_Command", "semrep -D")
+            //myGenericObj.setField("SilentEmail", true)
+            //myGenericObj.setFileField("UpLoad_File", filename)
             try {
+                val username = System.getProperty("umlsUsername")
+                val password = System.getProperty("umlsPassword")
+                val email = System.getProperty("umlsEmail")
+                //val myGenericObj = new GenericObject(200,username, password)
+                val myGenericObj = if(text.size > 10000) new GenericObject(username, password) else new GenericObject(100,username, password)
 
-                results = myGenericObj.handleSubmission
-                //println(results)
+                //TODO read from properties
+                myGenericObj.setField("Email_Address", email)
+
+                if(text.size > 10000) {
+                    val pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream("./batch.txt"),"US-ASCII"))
+                    pw.print(text)
+                    pw.close()
+                    myGenericObj.setField("SilentEmail", true)
+                    myGenericObj.setFileField("UpLoad_File", "./batch.txt")
+                    myGenericObj.setField("Batch_Command", "metamap -AlN")
+                }
+                else {
+                    myGenericObj.setField("APIText", text)
+                    myGenericObj.setField("KSOURCE", "1213")
+                    myGenericObj.setField("COMMAND_ARGS", """-AlN""")
+                }
+
+                // Submit the job request
+                try {
+
+                    results = myGenericObj.handleSubmission
+                    while(!results.contains("Established connection to Tagger Server on localhost")) {
+                        LOG.error("No answer from umls service, trying again!")
+                        Thread.sleep(1000)
+                        results = myGenericObj.handleSubmission
+                    }
+                    //println(results)
+                }
+                catch {
+                    case ex: RuntimeException => {
+                        ex.printStackTrace
+                    }
+                }
+
+                if(text.size > 10000)
+                    new File("./batch.txt").delete()
+
+                cache += (text -> results)
+
+                val pw = new PrintWriter(new FileWriter(mm,true))
+                pw.print(text)
+                pw.print(cacheSep)
+                pw.print(results)
+                pw.print(cacheSep)
+                pw.close
             }
             catch {
-                case ex: RuntimeException => {
-                    ex.printStackTrace
-                }
+                case e:NullPointerException => LOG.error(
+                    """When using UmlsEnhancer you have to specify a umlsUsername and umlsPassword by
+                      | using JVM arguments -DumlsUsername and -DumlsPassword
+                    """.stripMargin)
             }
 
-            if(text.size > 10000)
-                new File("./batch.txt").delete()
-        }
-        catch {
-            case e:NullPointerException => LOG.error(
-                """When using UmlsEnhancer you have to specify a umlsUsername and umlsPassword by
-                  | using JVM arguments -DumlsUsername and -DumlsPassword
-                """.stripMargin)
         }
 
         results

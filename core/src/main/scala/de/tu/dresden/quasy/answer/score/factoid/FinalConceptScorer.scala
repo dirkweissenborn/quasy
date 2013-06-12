@@ -1,8 +1,8 @@
 package de.tu.dresden.quasy.answer.score.factoid
 
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
-import de.tu.dresden.quasy.answer.tycor.{UmlsTycor, LuceneTycor}
-import tycor.ParagraphTycor
+import tycor.{UmlsTycor, SupportingEvidenceTycor, ParagraphTycor}
+import de.tu.dresden.quasy.model.annotation.Sentence
 
 /**
  * @author dirk
@@ -10,12 +10,14 @@ import tycor.ParagraphTycor
  * Time: 2:59 PM
  */
 object FinalConceptScorer extends FactoidScorer {
-    protected[factoid] def scoreInternal(factoid: FactoidAnswer) = {
-        val prominence = factoid.scores.getOrElse(Manifest.classType(classOf[ConceptProminenceScorer]),0.0)
-        val luceneTypeScore = factoid.scores.getOrElse(Manifest.classType(classOf[LuceneTycor]),0.0)
-        val paragraphTypeScore = factoid.scores.getOrElse(Manifest.classType(classOf[ParagraphTycor]),0.0)
-        val umlsTypeScore = factoid.scores.getOrElse(Manifest.classType(UmlsTycor.getClass),0.0)
-
-        prominence * List(luceneTypeScore,paragraphTypeScore,umlsTypeScore).max
+    def scoreInternal(factoid: FactoidAnswer) = {
+        //val prominence = factoid.score[ConceptProminenceScorer]
+        val weightedProminence = factoid.score[WeightedContextScorer[Sentence]]
+        val paragraphTypeScore = factoid.score[ParagraphTycor]
+        val supportingEvidenceScore = factoid.score[SupportingEvidenceTycor]
+        val idfScore = factoid.score[IdfScorer]
+        val umlsTypeScore = factoid.score[UmlsTycor.type]
+                                                                                                                       //smoothing
+        weightedProminence * idfScore * (math.max(List(paragraphTypeScore,supportingEvidenceScore).max + umlsTypeScore,0.01))
     }
 }

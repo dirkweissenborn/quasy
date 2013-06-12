@@ -1,19 +1,16 @@
 package de.tu.dresden.quasy.webservices.bioasq
 
-import model._
-import model.BioASQServiceResult
-import model.FindEntityRequest
-import model.LinkedLifeTriples
+import de.tu.dresden.quasy.webservices.bioasq.model.{FindPubMedCitationsRequest, BioASQServiceResult, FindEntityRequest, LinkedLifeTriples}
 import org.apache.commons.logging.LogFactory
 import com.google.gson.{Gson, JsonObject, JsonParser}
 import org.apache.commons.httpclient.{HttpException, HttpClient}
 import org.apache.commons.httpclient.methods.{PostMethod, GetMethod}
-import java.net.{URL, HttpURLConnection}
+import java.net.{HttpURLConnection}
 import scala.RuntimeException
-import scala.StringBuilder
 import org.apache.commons.httpclient.methods.multipart.{Part, MultipartRequestEntity, StringPart}
-import java.io.{StringWriter, IOException}
+import java.io.{IOException}
 import org.apache.commons.io.IOUtils
+import de.tu.dresden.quasy.webservices.model.DocumentsResult
 
 /**
  * @author dirk
@@ -42,7 +39,7 @@ class BioASQService {
         val targetUrl: String = getTargetUrl(url)
         var requestObjects:Array[Any] = Array(query)
         if (nr > 0)
-            requestObjects ++= Array(0,nr)
+            requestObjects ++= Array(0,math.min(nr,1000))
 
 
         //LOG.info("Query-url: "+url+"  - findEntities=\""+queryString+"\"")
@@ -167,8 +164,8 @@ object BioASQService {
         getJochemConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getDoidConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")*/
         //service.getLinkedLifeTriples("Dextrose")
-        val res = service.getPubmedDocuments("DNMT3 proteins plants",200)
-        val doc = res.documents.find(_.pmid.equals("1563036"))
+        val res = service.getPubmedDocuments("21328290[uid]",1)
+        assert(res.documents.head.pmid == "21328290")
         System.exit(0)
     }
 }

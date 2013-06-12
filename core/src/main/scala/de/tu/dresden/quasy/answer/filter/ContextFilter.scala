@@ -12,10 +12,9 @@ class ContextFilter(scorer:AnswerContextScorer) {
 
     def filter(candidates:List[AnswerContext], maxNr:Int) : List[AnswerContext] = {
         val manifest = Manifest.classType(scorer.getClass)
+        candidates.foreach(scorer.score)
         val sortedCandidates = candidates.sortBy(candidate => {
-            val score = scorer.score(candidate)
-            candidate.scores += (manifest -> score)
-            -score
+            -candidate.scores(manifest)
         })
         if (maxNr < sortedCandidates.size) {
             val threshold = sortedCandidates(maxNr).scores(manifest)

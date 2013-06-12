@@ -38,20 +38,22 @@ class OpenNlpChunkEnhancer(val modelFile:File) extends TextEnhancer{
             val tags = sentence.getTokens.map(_.posTag)
 
             val chunks = chunker.chunkAsSpans(tokens.map(_.coveredText).toArray,tags.toArray)
-            val acc = chunks.sortBy(_.getStart).foldLeft(List[opennlp.tools.util.Span]())((acc,chunk) => {
-                if(acc.isEmpty) {
-                    chunk :: acc
-                } else {
-                    if(acc.head.getType.equals(chunk.getType)) {
+            if (chunks.size > 0) {
+                val acc = chunks.sortBy(_.getStart).foldLeft(List[opennlp.tools.util.Span]())((acc,chunk) => {
+                    if(acc.isEmpty) {
                         chunk :: acc
+                    } else {
+                        if(acc.head.getType.equals(chunk.getType)) {
+                            chunk :: acc
+                        }
+                        else {
+                            new Chunk(tokens(acc.last.getStart).begin,tokens(acc.head.getEnd-1).end,text,acc.head.getType)
+                            List[opennlp.tools.util.Span](chunk)
+                        }
                     }
-                    else {
-                        new Chunk(tokens(acc.last.getStart).begin,tokens(acc.head.getEnd-1).end,text,acc.head.getType)
-                        List[opennlp.tools.util.Span](chunk)
-                    }
-                }
-            })
-            new Chunk(tokens(acc.last.getStart).begin,tokens(acc.head.getEnd-1).end,text,acc.head.getType)
+                })
+                new Chunk(tokens(acc.last.getStart).begin,tokens(acc.head.getEnd-1).end,text,acc.head.getType)
+            }
             /*chunks.foreach(chunk => {
                 try {
                     new Chunk(tokens(chunk.getStart).begin,tokens(chunk.getEnd-1).end,text,chunk.getType)

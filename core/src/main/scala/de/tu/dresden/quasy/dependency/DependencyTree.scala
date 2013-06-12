@@ -23,8 +23,18 @@ class DependencyTree(val graph:Graph[DepNode,DepEdge])  {
 
     def getSubtree(node:DepNode): Graph[DepNode,DepEdge] = {
         var edges = List[DepEdge[DepNode]]()
-        graph.get(node).traverse()(node => VisitorReturn.Continue, edge => edges ::= edge.toEdgeIn)
+        graph.get(node).traverse()(_ => VisitorReturn.Continue, edge => edges ::= edge.toEdgeIn)
         Graph.from(List[DepNode](node), edges)
+    }
+
+    def getSubtree(node:graph.NodeT): Graph[DepNode,DepEdge] = {
+        var edges = List[DepEdge[DepNode]]()
+        node.traverse()(_ => VisitorReturn.Continue, edge => edges ::= edge.toEdgeIn)
+        Graph.from(List[DepNode](node), edges)
+    }
+
+    def getSubtree(token:Token): Graph[DepNode,DepEdge] = {
+       getSubtree(getDepNode(token).get)
     }
 
     def getDepNode(token:Token) = {

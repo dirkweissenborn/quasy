@@ -1,11 +1,17 @@
+import cc.mallet.types.StringKernel
 import de.tu.dresden.quasy.answer.model.AnswerContext
 import de.tu.dresden.quasy.enhancer.stanford.CorefStanfordEnhancer
 import de.tu.dresden.quasy.io.{AnnotatedTextSource, LoadGoldStandards}
 import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.model.annotation.{Chunk, OntologyEntityMention, OntologyConcept, Sentence}
+import de.tu.dresden.quasy.model.db.LuceneIndex
 import de.tu.dresden.quasy.run.RunFullPipeline
-import java.io.{FileInputStream, File}
+import io.Source
+import java.io.{FileWriter, PrintWriter, FileInputStream, File}
+import java.text.Normalizer
 import java.util.Properties
+import org.apache.lucene.queryParser.QueryParser
+import org.apache.lucene.util.Version
 import pitt.search.semanticvectors._
 
 /**
@@ -13,6 +19,45 @@ import pitt.search.semanticvectors._
  *          Date: 5/14/13
  *          Time: 2:24 PM
  */
+
+
+val original = Source.fromFile("QA_1370963959453.csv").getLines().take(1).toList.head.split(",")
+val newOne = Source.fromFile("QA_1371025678291.csv").getLines().take(1).toList.head.split(",")
+val map = newOne.map(s => (s,original.indexOf(s))).toMap
+
+
+Source.fromFile("QA_1371025678291.csv").getLines().drop(1).foreach(line => {
+    if (line.startsWith("#"))
+        println(line)
+    else {
+        val scores = line.split(",")
+        println(scores.zip(newOne).map {
+            case (s,l) => (s,map(l))
+        }.sortBy(_._2).map(_._1).mkString(","))
+    }
+})
+
+
+/*val s1 = "fibrotic tissue"
+val s2 = "fibrocytes"
+
+val sk = new StringKernel()
+
+val s = sk.K(s1,s2)
+s  */
+
+val props = new Properties()
+props.load(new FileInputStream("conf/configuration.properties"))
+
+val l = LuceneIndex.fromConfiguration(props)
+
+
+val q = new QueryParser(Version.LUCENE_36, "contents", l.analyzer).
+    parse("\"rheumatoid arthritis\" AND \"less common in men\"")
+
+val top = l.searcher.search(q,1000)
+
+top
 
 /*val goldAnswers = LoadGoldStandards.load(new File("corpus/questions.pretty.json"))
 val props = new Properties()

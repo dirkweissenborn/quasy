@@ -1,25 +1,18 @@
 package de.tu.dresden.quasy.run
 
 import java.io.{InputStream, FileInputStream, File}
-import com.thoughtworks.xstream.XStream
-import com.thoughtworks.xstream.io.xml.DomDriver
 import io.Source
 import java.util.zip.GZIPInputStream
 import xml.pull._
 import xml.pull.EvElemStart
-import com.thoughtworks.xstream.mapper.{MapperWrapper, CannotResolveClassException}
-import org.apache.lucene.document.{DateTools, Field, Document}
+import org.apache.lucene.document.{Field, Document}
 import org.apache.lucene.index.{IndexWriterConfig, IndexWriter}
-import org.apache.lucene.index.IndexWriter.MaxFieldLength
-import pitt.search.lucene.PorterAnalyzer
 import org.apache.lucene.store.FSDirectory
 import org.apache.commons.logging.LogFactory
 import org.apache.lucene.util.Version
-import com.thoughtworks.xstream.converters.extended.ToAttributedValueConverter
-import com.thoughtworks.xstream.annotations.XStreamConverter
 import xml.{Elem, XML, MetaData}
 import actors.Actor
-import parallel.Future
+import org.apache.lucene.analysis.en.EnglishAnalyzer
 
 /**
  * @author dirk
@@ -42,7 +35,7 @@ object IndexPubmed {
             INDEX_DIR.listFiles().foreach(_.delete())
         }
 
-        val config = new IndexWriterConfig(Version.LUCENE_36,new PorterAnalyzer)
+        val config = new IndexWriterConfig(Version.LUCENE_36,new EnglishAnalyzer(Version.LUCENE_36))
         config.setRAMBufferSizeMB(64)
         INDEX_WRITER = new IndexWriter(FSDirectory.open(INDEX_DIR), config)
 

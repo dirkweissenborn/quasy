@@ -14,22 +14,25 @@ import java.io.{FileInputStream, File}
  */
 object PrintDependencyTree {
 
-      var sentences = List("What activities do patients with patellar instability perceive makes their patella unstable?")
-
       def main(args:Array[String]) {
           val props = new Properties()
           props.load(new FileInputStream("conf/configuration.properties"))
 
           val pipeline = FullClearNlpPipeline.fromConfiguration(props)
-          val texts = sentences.map(sentence => new AnnotatedText(sentence))
 
-          texts.foreach(text => pipeline.enhance(text) )
-
-          texts.foreach(text => {
-              val depTree = text.getAnnotations[Sentence].head.getDependencyTree
-              println(depTree.graph.toString())
-              println
-          })
+          var sentence = ""
+          while(sentence != "a") {
+              println("Write your sentence:")
+              sentence = readLine()
+              val text = new AnnotatedText(sentence)
+              pipeline.enhance(text)
+              text.getAnnotations[Sentence].foreach(s => {
+                  println(s.getTokens.map(t => t.coveredText+"_"+t.posTag).mkString(" "))
+                  println(s.getDependencyTree.prettyPrint+"\n")
+                  println(s.printRoleLabels)
+                  println()
+              })
+          }
 
       }
 

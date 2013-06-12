@@ -8,15 +8,15 @@ import de.tu.dresden.quasy.model.annotation.OntologyEntityMention
  * Date: 5/8/13
  * Time: 10:41 AM
  */
-class OntologyEntitySelector(threshold:Double, source:String = "") extends TextEnhancer{
+class OntologyEntitySelector(scoreThreshold:Double, source:String = "") extends TextEnhancer{
     def enhance(text: AnnotatedText) {
         var oes = text.getAnnotations[OntologyEntityMention]
 
         oes.foreach(oe => oe.ontologyConcepts = oe.ontologyConcepts.filter( oc =>
             if(source.isEmpty)
-                oc.score > threshold
+                oc.score > scoreThreshold
             else
-                !source.equals(oc.source) || oc.score > threshold))
+                !source.equals(oc.source) || oc.score > scoreThreshold))
 
         oes = oes.filterNot(_.ontologyConcepts.isEmpty)
 
