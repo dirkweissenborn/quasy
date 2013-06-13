@@ -3,14 +3,11 @@ package de.tu.dresden.quasy.enhancer.umls
 import gov.nih.nlm.nls.skr.GenericObject
 import de.tu.dresden.quasy.enhancer.TextEnhancer
 import de.tu.dresden.quasy.model.{Span, AnnotatedText}
-import de.tu.dresden.quasy.model.annotation.{Token, SemanticRelationAnnotation, OntologyEntityMention, UmlsConcept}
+import de.tu.dresden.quasy.model.annotation.{Token, OntologyEntityMention, UmlsConcept}
 import de.tu.dresden.quasy.util.Xmlizer
 import java.io._
-import org.apache.http.entity.mime.content.FileBody
-import java.nio.charset.Charset
 import org.apache.commons.logging.LogFactory
-import java.text.Normalizer
-import io.Source
+import de.tu.dresden.quasy.model.db.MetaMapCache
 
 /**
  * @author dirk
@@ -37,13 +34,11 @@ object UmlsEnhancer extends TextEnhancer {
         val asciiText = text.text
 
         val maxLength = 9900
-        var last = asciiText
-        var first = ""
+        var last:String = asciiText
         var texts = List[String]()
         while (last.size > maxLength) {
-            val (newfirst,newlast) = last.splitAt(asciiText.indexOf(" ",maxLength))
-            last = newlast.trim
-            first = newfirst.trim
+            val (first,newLast) = last.splitAt(asciiText.indexOf(" ",maxLength))
+            last = newLast
             texts ::= first
         }
         texts ::= last
@@ -51,7 +46,8 @@ object UmlsEnhancer extends TextEnhancer {
         var offset = 0
 
         texts.foreach(asciiText => {
-            val resultStr = requestSemRep(asciiText+"\n")
+            offset += asciiText.takeWhile(_.equals(' ')).size
+            val resultStr = requestSemRep(asciiText.trim)
             //var NEs = List[OntologyEntityMention]()
             resultStr.split("""\n""").foreach( line => {
                 val split = line.split("""\|""")
@@ -82,55 +78,13 @@ object UmlsEnhancer extends TextEnhancer {
                         }
                     }
                 }
-                /*if (split.size > 5 && split(5).equals("text")) {
-                    offset = asciiText.indexOf(split(6),offset+1)
-                }
-
-                if (split.size > 5 && split(5).equals("entity")) {
-                    val cui = split(6)
-                    val tuis = split(8)
-                    val begin = split(16)
-                    val end = split(17)
-                    val concept = new UmlsConcept(cui, tuis.split(","))
-                    try {
-                        NEs ::= new OntologyEntityMention(Array(new Span(begin.toInt-1+offset,end.toInt+offset)), text, List(concept))
-                    }
-                    catch {
-                        case e =>
-                    }
-                } else if (split.size > 5 && split(5).equals("relation"))  {
-                    val beginSubj = split(19).toInt
-                    val endSubj = split(20).toInt +1
-
-                    val beginObj = split(39).toInt
-                    val endObj = split(40).toInt +1
-
-                    val predicate = split(22)
-
-                    new SemanticRelationAnnotation(
-                        predicate,
-                        NEs.find(_.spans.head.equals(new Span(beginSubj,endSubj))).get,
-                        NEs.find(_.spans.head.equals(new Span(beginObj,endObj))).get)
-                } */
             } )
             offset += asciiText.length+1
         })
     }
 
-    private val mm = new File("mm.cache")
-    mm.createNewFile()
-    private val cacheSep = "\n"+("#"*30)+"\n"
-    private var cache = {
-        val cacheStr = Source.fromFile(mm).getLines().mkString("\n")
-        val entries = cacheStr.split(cacheSep)
-
-        (0 until (entries.size / 2)).map(i => {
-            (entries(i*2),entries(i*2+1))
-        }).toMap
-    }
-
     def requestSemRep(text:String):String = {
-        var results = cache.getOrElse(text, "")
+        var results = MetaMapCache.getCachedUmlsResponse(text)
 
         if(results.equals("")) {
             //myGenericObj.setField("Batch_Command", "semrep -D")
@@ -180,14 +134,7 @@ object UmlsEnhancer extends TextEnhancer {
                 if(text.size > 10000)
                     new File("./batch.txt").delete()
 
-                cache += (text -> results)
-
-                val pw = new PrintWriter(new FileWriter(mm,true))
-                pw.print(text)
-                pw.print(cacheSep)
-                pw.print(results)
-                pw.print(cacheSep)
-                pw.close
+                MetaMapCache.addToCache(text, results)
             }
             catch {
                 case e:NullPointerException => LOG.error(

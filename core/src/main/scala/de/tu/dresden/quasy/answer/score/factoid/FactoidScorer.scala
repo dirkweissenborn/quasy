@@ -2,6 +2,7 @@ package de.tu.dresden.quasy.answer.score.factoid
 
 import de.tu.dresden.quasy.model.annotation.OntologyConcept
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
+import de.tu.dresden.quasy.model.db.ScoreCache
 
 /**
  * @author dirk
@@ -14,13 +15,14 @@ trait FactoidScorer {
     protected def scorable(factoidAnswer:FactoidAnswer) =true
 
     def score(factoid:FactoidAnswer):Double = {
-        val score =
+        val cachedScore = ScoreCache.score(factoid)(man)
+
+        val score =cachedScore.getOrElse(
             if (scorable(factoid))
-                scoreInternal(factoid) else 0.0
+                scoreInternal(factoid) else 0.0)
 
         factoid.addScore(score)(man)
         score
-
     }
 
     def scoreInternal(factoid:FactoidAnswer):Double

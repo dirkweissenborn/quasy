@@ -23,8 +23,8 @@ class ParagraphTycor(paragraphs:List[AnswerContext]) extends TycorScorer {
     def scoreInternal(factoid: FactoidAnswer):Double = {
         var score = 0.0
         var evidence = ""
-        val aType = factoid.question.answerType
-        if (!aType.coveredText.isEmpty) {
+        val aType = factoid.question.answerType.asInstanceOf[SimpleAnswerTypeLike]
+        if (!aType.coveredTokens.isEmpty) {
             val targetConcepts =
                 if (aType.isInstanceOf[ConceptualAnswerType])
                     aType.asInstanceOf[ConceptualAnswerType].concepts
@@ -36,7 +36,7 @@ class ParagraphTycor(paragraphs:List[AnswerContext]) extends TycorScorer {
                 val targetTokens =
                     if (targetConcepts.isEmpty) {
                         //String matching
-                        val regex = factoid.question.answerType.coveredText.split(" ").permutations.map("("+_.mkString(" ")+")").mkString("|")
+                        val regex = aType.coveredTokens.map(_.lemma).permutations.map("("+_.mkString(" ")+")").mkString("|")
                         val lemmaParagraphString: String = lemmaParagraphs.getOrElseUpdate(p, p.answerContext.getTokens.map(_.lemma).mkString(" "))
                         val matches = regex.r.findAllIn(lemmaParagraphString)
 
@@ -73,18 +73,13 @@ class ParagraphTycor(paragraphs:List[AnswerContext]) extends TycorScorer {
                             val answerNode = t.getDepNode(answerToken).get*/
 
                             if((answerToken.depTag.tag.matches("appos|npadvmod") &&
-                                targetToken.position < answerToken.position &&
                                 targetToken.position == answerToken.depTag.dependsOn) ||
 
                                (targetToken.depTag.tag == "nn" &&
                                 answerToken.position == targetToken.depTag.dependsOn) ||
 
                                (answerToken.depTag.tag == "nn" &&
-                                targetToken.position == answerToken.depTag.dependsOn)  ||
-
-                               (targetToken.depTag.tag.matches("appos|npadvmod") &&
-                                answerToken.position < targetToken.position &&
-                                answerToken.position == targetToken.depTag.dependsOn))
+                                targetToken.position == answerToken.depTag.dependsOn)  )
                             {
                                 //this is a low scored type score, because these patterns don't necessarily imply that the answer is of the type
                                 score = 0.5
@@ -94,7 +89,9 @@ class ParagraphTycor(paragraphs:List[AnswerContext]) extends TycorScorer {
                                 val aSrl = answerToken.srls.find(_.label == "A1")
                                 tSrl.isDefined && aSrl.isDefined && tSrl.get.head == aSrl.get.head &&
                                     targetToken.sentence.getTokens.find(_.position == aSrl.get.head).get.lemma == "be"
-                            })
+                            }||
+                                (targetToken.depTag.tag.matches("appos|npadvmod") &&
+                                    answerToken.position == targetToken.depTag.dependsOn))
                             {
                                 println("tycor evidence: "+answerToken.sentence.coveredText)
                                 return 1.0

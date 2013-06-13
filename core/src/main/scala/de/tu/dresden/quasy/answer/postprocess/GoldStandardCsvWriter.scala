@@ -1,4 +1,4 @@
-package de.tu.dresden.quasy.answer.eval
+package de.tu.dresden.quasy.answer.postprocess
 
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
 import de.tu.dresden.quasy.model.annotation.Question
@@ -10,12 +10,12 @@ import cc.mallet.types.StringKernel
  * Date: 6/10/13
  * Time: 1:57 PM
  */
-class GoldStandardCsvWriter(goldStandards:Map[Question,Set[String]], out:File) extends EvalWriter{
+class GoldStandardCsvWriter(goldStandards:Map[Question,Set[String]], out:File) extends AnswerPostProcessor{
     private val pw = new PrintWriter(new FileWriter(out))
     private val sk = new StringKernel()
     private var scoreTypes = List[(FactoidAnswer) => Double]()
 
-    def writeFactoidEval(factoidAnswer: FactoidAnswer) {
+    def processFactoid(factoidAnswer: FactoidAnswer) {
         if (scoreTypes.isEmpty) {
             writeFirstLine(factoidAnswer)
         }
@@ -33,7 +33,7 @@ class GoldStandardCsvWriter(goldStandards:Map[Question,Set[String]], out:File) e
             pw.print(m.toString + ",")
             (fa: FactoidAnswer) => fa.getScores(m)
         }).toList
-        //second: product scores
+        /*/second: product scores
         scoreTypes ++= scorerManifests.flatMap(m1 => scorerManifests.map(m2 => {
             if (m1.equals(m2))
                 None
@@ -41,7 +41,7 @@ class GoldStandardCsvWriter(goldStandards:Map[Question,Set[String]], out:File) e
                 pw.print(m1.toString + "*" + m2.toString + ",")
                 Some((fa: FactoidAnswer) => fa.getScores(m1) * fa.getScores(m2))
             }
-        })).flatten.toList
+        })).flatten.toList */
 
         scoreTypes ++= List((fa: FactoidAnswer) => {
             if (goldStandards(fa.question).map(st => sk.K(fa.answerText.toLowerCase, st.toLowerCase)).max > 0.6)

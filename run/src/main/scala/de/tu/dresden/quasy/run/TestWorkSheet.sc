@@ -46,7 +46,7 @@ val sk = new StringKernel()
 val s = sk.K(s1,s2)
 s  */
 
-val props = new Properties()
+/*val props = new Properties()
 props.load(new FileInputStream("conf/configuration.properties"))
 
 val l = LuceneIndex.fromConfiguration(props)
@@ -57,7 +57,7 @@ val q = new QueryParser(Version.LUCENE_36, "contents", l.analyzer).
 
 val top = l.searcher.search(q,1000)
 
-top
+top*/
 
 /*val goldAnswers = LoadGoldStandards.load(new File("corpus/questions.pretty.json"))
 val props = new Properties()

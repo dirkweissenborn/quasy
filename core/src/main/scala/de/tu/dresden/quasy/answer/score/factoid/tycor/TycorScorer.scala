@@ -2,7 +2,7 @@ package de.tu.dresden.quasy.answer.score.factoid.tycor
 
 import de.tu.dresden.quasy.answer.score.factoid.FactoidScorer
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
-import de.tu.dresden.quasy.model.annotation.DecisionAnswerType
+import de.tu.dresden.quasy.model.annotation.{SimpleAnswerTypeLike, DecisionAnswerType}
 
 /**
  * @author dirk
@@ -12,5 +12,5 @@ import de.tu.dresden.quasy.model.annotation.DecisionAnswerType
 trait TycorScorer extends FactoidScorer{
     override protected def scorable(factoidAnswer: FactoidAnswer) =
         factoidAnswer.question.answerType != null &&
-        !factoidAnswer.question.answerType.isInstanceOf[DecisionAnswerType]
+        factoidAnswer.question.answerType.isInstanceOf[SimpleAnswerTypeLike]
 }

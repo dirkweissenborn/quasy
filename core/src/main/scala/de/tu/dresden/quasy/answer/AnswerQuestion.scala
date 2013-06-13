@@ -1,7 +1,7 @@
 package de.tu.dresden.quasy.answer
 
 import de.tu.dresden.quasy.model.annotation._
-import eval.EvalWriter
+import postprocess.AnswerPostProcessor
 import fetch.{NlmPubmedFetcher, BioASQPubMedFetcher}
 import model.{FactoidAnswer}
 
@@ -28,7 +28,7 @@ import de.tu.dresden.quasy.similarity.WordnetSimilarity
  * Date: 5/29/13
  * Time: 11:47 AM
  */
-class AnswerQuestion(config:Properties,evalWriter:EvalWriter = null) {
+class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
     private val luceneIndex = LuceneIndex.fromConfiguration(config)
     private val fullClearNlp = FullClearNlpPipeline.fromConfiguration(config)
     private val chunker = OpenNlpChunkEnhancer.fromConfiguration(config)
@@ -145,38 +145,46 @@ class AnswerQuestion(config:Properties,evalWriter:EvalWriter = null) {
         println("scoring answers...")
         answerCandidates.foreach(fa => {
             weightedProminenceScorer.score(fa)
+            prominenceScorer.score(fa)
             UmlsTycor.score(fa)
         })
-        val prominenceSortedCandidates = answerCandidates.toSeq.sortBy(a => -a.score[WeightedContextScorer[Sentence]]-a.score[UmlsTycor.type]).take(50)
+        var sortedCandidates = answerCandidates.toSeq.sortBy(a =>
+            -FinalConceptScorer.scoreInternal(a))
+        sortedCandidates = sortedCandidates.take(50)
 
-        prominenceSortedCandidates.foreach(fa => {
+        sortedCandidates.foreach(fa => {
             idfScorer.score(fa)
-            prominenceScorer.score(fa)
             paragraphTycor.score(fa)
+        })
+
+        sortedCandidates = answerCandidates.toSeq.sortBy(a => -FinalConceptScorer.scoreInternal(a))
+        sortedCandidates = sortedCandidates.take(40)
+
+        sortedCandidates.foreach(fa =>{
             supportingEvidenceTycor.score(fa)
-            //FinalConceptScorer.score(fa)
+            FinalConceptScorer.score(fa)
             println("scored: "+fa.answer.preferredLabel)
             fa.getScores.foreach(s => println("\t"+s._1.erasure.getSimpleName+"="+s._2))
         })
 
-        val (maxScorer,averageScorer) =
-            prominenceSortedCandidates.head.getScores.foldLeft((List[FactoidScorer](),List[FactoidScorer]())){
+       /* val (maxScorer,averageScorer) =
+            sortedCandidates.head.getScores.foldLeft((List[FactoidScorer](),List[FactoidScorer]())){
                 case(acc,(manifest,_))=> {
                     (new MaxValueScorer(prominenceSortedCandidates)(manifest) :: acc._1,
                     new AverageValueScorer(prominenceSortedCandidates)(manifest) :: acc._2)
             } }
-        prominenceSortedCandidates.foreach(fa => {
+        sortedCandidates.foreach(fa => {
             maxScorer.foreach(_.score(fa))
             averageScorer.foreach(_.score(fa))
-        })
+        }) */
         println("done")
 
-        prominenceSortedCandidates.foreach(fa => {
+        sortedCandidates.foreach(fa => {
             if (evalWriter ne null)
-                evalWriter.writeFactoidEval(fa)
+                evalWriter.processFactoid(fa)
         })
 
-        val sortedCandidates = prominenceSortedCandidates.sortBy(-_.score[FinalConceptScorer.type])
+        sortedCandidates = sortedCandidates.sortBy(-_.score[FinalConceptScorer.type])
 
         /*
         println()
