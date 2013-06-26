@@ -15,9 +15,9 @@ object NounalRelationEnhancer extends TextEnhancer{
 
     val templateTree = Graph(((".*",0)~+>(".*",1))("(nsubj|.obj)"),((".*",1)~+>(".*",2))("prep"),((".*",2)~+>(".*",3))("pobj")  )
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         text.getAnnotations[Sentence].foreach(sentence => {
-            val tree: DependencyTree = sentence.getDependencyTree
+            val tree: DependencyTree = sentence.dependencyTree
             val intersections = tree.matchTreeToTemplate(templateTree)
             intersections.foreach(intersection => {
                 try {

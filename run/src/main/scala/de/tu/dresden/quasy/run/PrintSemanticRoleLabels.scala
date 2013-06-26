@@ -25,7 +25,7 @@ object PrintSemanticRoleLabels {
                 println(text.id + "\t" + sentence.coveredText)
 
                 println(sentence.printRoleLabels)
-                println(sentence.getDependencyTree.prettyPrint)
+                println(sentence.dependencyTree.prettyPrint)
                 println()
             })
         })

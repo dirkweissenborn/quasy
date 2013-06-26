@@ -39,7 +39,7 @@ object PrintDependencyTree {
 
               text.getAnnotations[Sentence].foreach(s => {
                   println(s.getTokens.map(t => t.coveredText+"_"+t.posTag).mkString(" "))
-                  println(s.getDependencyTree.prettyPrint+"\n")
+                  println(s.dependencyTree.prettyPrint+"\n")
                   println(s.printRoleLabels)
                   println(s.getAnnotationsWithin[Chunk].map(_.toString).mkString("\t"))
                   if (s.isInstanceOf[Question])

@@ -23,7 +23,7 @@ object UmlsTycor  extends TycorScorer {
             case umlsConcept:UmlsConcept => {
                 val sTypes = aType.semanticTypes
                 if (sTypes.intersect(umlsConcept.semanticTypes).size > 0 ||
-                    sTypes.exists(st => umlsConcept.semanticTypes.exists(cSt => !UmlsSemanticNetwork.?(cSt,"isa",st).isEmpty)))
+                    sTypes.exists(st => umlsConcept.semanticTypes.exists(cSt => UmlsSemanticNetwork.isa(cSt,st))))
                   //semantic network information is very shallow --> just 0.5 as tycor score
                    0.5 // Naloxone for example is not under D26-- Pharmaceutical preparations --, so Mesh as taxonomy cannot be applied for e.g. "What is the best medication for opioid overdose?" - MeshTycor.scoreInternal(factoid)
                 else

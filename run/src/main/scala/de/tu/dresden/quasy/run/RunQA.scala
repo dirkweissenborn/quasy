@@ -1,8 +1,7 @@
 package de.tu.dresden.quasy.run
 
-import java.io.{FileInputStream, File}
+import java.io.{PrintWriter, FileWriter, FileInputStream, File}
 import java.util.Properties
-import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.model.annotation._
 import de.tu.dresden.quasy.enhancer._
 import clearnlp.{FullClearNlpPipeline}
@@ -12,9 +11,8 @@ import de.tu.dresden.quasy.enhancer.regex.RegexAcronymEnhancer
 import scala.Array
 import umls.UmlsEnhancer
 import de.tu.dresden.quasy.answer.AnswerQuestion
-import de.tu.dresden.quasy.model.db.{MetaMapCache, ScoreCache, LuceneIndex}
+import de.tu.dresden.quasy.model.db.{AnnotationCache, MetaMapCache, ScoreCache, LuceneIndex}
 import de.tu.dresden.quasy.answer.postprocess.{CacheUpdater, AnswerPostProcesserSet, GoldStandardCsvWriter}
-import de.tu.dresden.quasy.answer.score.factoid.WeightedContextScorer
 
 /**
  * @author dirk
@@ -24,7 +22,6 @@ import de.tu.dresden.quasy.answer.score.factoid.WeightedContextScorer
 object RunQA {
 
     def main(args:Array[String]) {
-        //TODO investigate: When is umls semantic type info useful and when not! (eg. not for type "methyl donor" but for "cancer")
         //println(tycor.matchInstanceToType("sequence", "rna"))
         //println(tycor.matchInstanceToType("sequence", "AATAAA"))
         //val q = "What is the most prominent sequence consensus for the polyadenylation site?"
@@ -68,14 +65,17 @@ object RunQA {
 
         val config = new File(args(0))
         val questionsFile = new File(args(1))
+        val outputWriter = new PrintWriter(new FileWriter(args(1)+".result"))
+        outputWriter.print("{\"system\": \"BioASQ_Baseline_1bB\", \"username\": \"gbt\", \"password\": \"gr1979\", \n\"questions\": [")
 
         val props = new Properties()
         props.load(new FileInputStream(config))
 
         val cacheDir = new File(props.getProperty("cache.dir","./cache"))
+        cacheDir.mkdirs()
 
         ScoreCache.loadCache(new File(cacheDir,questionsFile.getName+".scores"))
-        MetaMapCache.loadCache(new File(cacheDir,questionsFile.getName+".mm"))
+        AnnotationCache.loadCache(new File(cacheDir,questionsFile.getName+".annots"))
 
         val luceneIndex = LuceneIndex.fromConfiguration(props)
 
@@ -87,40 +87,81 @@ object RunQA {
         var qas = Map[Question,Set[String]]()
         val questionEnhancer = new QuestionEnhancer(luceneIndex)
 
-        val questions = goldAnswers.filter(_.`type`.matches("factoid|list")).map(qa => {
-            val text = new AnnotatedText(qa.body)
+        val texts = goldAnswers.filter(_.`type`.matches("factoid|list")).map(qa => {
+            val t = if(qa.body.startsWith("List "))
+                qa.body.substring(0,qa.body.length-1)+"?"
+            else
+                qa.body
+            val text = AnnotationCache.getCachedAnnotatedText(t)
+
             fullPipeline.process(AnnotatedTextSource(text))
             //new OntologyEntitySelector(0.1).enhance(text)
             questionEnhancer.enhance(text)
 
+            text.getAnnotations[Question].foreach(question => question.questionType = QuestionType.fromString(qa.`type`))
+
             text.getAnnotations[Question].foreach(q => {
                 q.questionType = QuestionType.fromString(qa.`type`)
-                qas += (q -> qa.answer.exact.toSet)
+                //if(qa. != null)
+                  //  qas += (q -> qa.answer.exact.toSet)
             })
-            val pmids = qa.answer.annotations.filter(_.`type` == "document").map(doc => doc.uri.substring(doc.uri.lastIndexOf("/")+1).toInt).toList
-
-            (text,pmids)
+            (qa,text)
         })
 
-        val evaluation = new AnswerPostProcesserSet(Set(
-            new GoldStandardCsvWriter(qas,new File("./QA_"+System.currentTimeMillis()+".csv")),
-            CacheUpdater)
-            )
+        val evaluation = new AnswerPostProcesserSet(
+            if(qas.isEmpty)
+                Set(CacheUpdater)
+            else
+                Set(new GoldStandardCsvWriter(qas,new File("./QA_"+System.currentTimeMillis()+".csv")),
+                    CacheUpdater)
+        )
         val answerer = new AnswerQuestion(props,evaluation)
 
-        questions.foreach{
-            case (text,pmids) => {
+        texts.foreach{ case (qa,text) => {
+            val pmids = /*if(qa.documents ne null)
+                qa.documents.map(doc => doc.substring(doc.lastIndexOf("/")+1).toInt).toList
+            else */
+                null
+
+            //Should be one
+            text.getAnnotations[Question].foreach(question => {
                 println("#########QUESTION#############")
-                text.getAnnotations[Question].foreach(question => {
-                    question.questionType = FactoidQ
-                    answerer.answer(question,pmids)
-                })
-                ScoreCache.storeCache
-                MetaMapCache.storeCache
-            }
-        }
+                outputWriter.println("{ \"id\": \""+qa.id+"\",")
+
+                answerer.answer(question,pmids) match {
+                    case Left(factoidAnswers) => {
+                        outputWriter.println("\"exact_answer\": ["+
+                            factoidAnswers.map(
+                                a => "["+
+                                    {  if(a._1.answer != null)
+                                           (a._1.answer.synonyms.toSet ++ Set(a._1.answerText)).map(t => "\""+t+"\"").mkString(",")
+                                        else
+                                            "\""+a._1.answerText+"\""
+                                    } +"]").mkString(",") +"]}")
+                        if(!texts.last.equals(text))
+                            outputWriter.print(",")
+                    }
+                    case Right(answers) =>
+                }
+                outputWriter.flush()
+            })
+
+            ScoreCache.storeCache
+            AnnotationCache.storeCache
+        }}
 
         luceneIndex.close
+        outputWriter.println("]}")
+        outputWriter.close()
         System.exit(0)
     }
 }
+
+/*
+  { id: 5118dd1305c10fae75000001,
+  type: 'factoid',
+  body: 'Is Rheumatoid Arthritis more common in men or women?',
+  answer:
+   { ideal: 'Disease patterns in RA vary between the sexes; the condition is more commonly seen in women, who exhibit a more aggressive disease and a poorer long-term outcome.',
+     exact: 'Women'
+*/

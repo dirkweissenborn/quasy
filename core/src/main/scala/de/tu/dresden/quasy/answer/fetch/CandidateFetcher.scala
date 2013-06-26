@@ -21,14 +21,16 @@ trait CandidateFetcher {
             pipeline.process(AnnotatedTextSource(answerTexts: _*))
         else {
             answerTexts.foreach(text => {
-                var sectionOffset = 0
-                text.text.split("[\n\r]").foreach(sectionString => {
-                    if (sectionString != "") {
-                        sectionOffset = text.text.indexOf(sectionString, sectionOffset)
-                        new Section(sectionOffset, sectionOffset + sectionString.length, text)
-                    }
-                    sectionOffset += sectionString.length
-                })
+                if(text.getAnnotations[Section].isEmpty) {
+                    var sectionOffset = 0
+                    text.text.split("[\n\r]").foreach(sectionString => {
+                        if (sectionString != "") {
+                            sectionOffset = text.text.indexOf(sectionString, sectionOffset)
+                            new Section(sectionOffset, sectionOffset + sectionString.length, text)
+                        }
+                        sectionOffset += sectionString.length
+                    })
+                }
             })
         }
 

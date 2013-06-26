@@ -10,7 +10,7 @@ import de.tu.dresden.quasy.enhancer.EnhancementPipeline
 import de.tu.dresden.quasy.io.AnnotatedTextSource
 import de.tu.dresden.quasy.model.annotation.{SimpleAnswerTypeLike, DecisionAnswerType, Section}
 import java.text.Normalizer
-import de.tu.dresden.quasy.model.db.LuceneIndex
+import de.tu.dresden.quasy.model.db.{AnnotationCache, LuceneIndex}
 
 /**
  * @author dirk
@@ -41,7 +41,7 @@ case class SupportingEvidenceTycor(luceneIndex:LuceneIndex, nrDocs:Int, atLeastD
                 acc + pmid
             })
 
-            val texts = asciiTexts.map(asciiText => new AnnotatedText("SupportingEvidence["+q.toString()+"]",asciiText))
+            val texts = asciiTexts.map(asciiText => AnnotationCache.getCachedAnnotatedText(asciiText))
             atLeastDependencyTreeAnnotator.process(AnnotatedTextSource(texts:_*))
             val tycor = new ParagraphTycor(texts.flatMap(text => text.getAnnotations[Section].map(section => AnswerContext(section,factoid.question))).toList)
 

@@ -19,7 +19,8 @@ class AnnotationsXstreamConverter extends Converter {
                 writer.startNode(m.erasure.getSimpleName+"s")
                 writer.addAttribute("class",m.erasure.getName)
                 annotations.foreach(annotation => {
-                    writer.startNode(m.erasure.getSimpleName)
+                    writer.startNode(annotation.getClass.getSimpleName)
+                    writer.addAttribute("class",annotation.getClass.getName)
                     context.convertAnother(annotation)
                     writer.endNode()
                 })
@@ -38,13 +39,14 @@ class AnnotationsXstreamConverter extends Converter {
 
         while(reader.hasMoreChildren) {
             reader.moveDown()
-            val className = reader.getAttribute("class")
-            val clazz = Class.forName(className)
-            var m = Manifest.classType(clazz)
+            var className = reader.getAttribute("class")
+            var m = Manifest.classType(Class.forName(className))
 
             var list = List[Annotation]()
             while(reader.hasMoreChildren) {
                 reader.moveDown()
+                className = reader.getAttribute("class")
+                val clazz = Class.forName(className)
                 val current = context.convertAnother(context.currentObject(),clazz)
                 list ++= List(current.asInstanceOf[Annotation])
                 reader.moveUp()

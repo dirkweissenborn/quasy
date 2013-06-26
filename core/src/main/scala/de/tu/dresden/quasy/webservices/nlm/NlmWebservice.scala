@@ -7,6 +7,10 @@ import org.apache.commons.io.IOUtils
 import xml.XML
 import de.tu.dresden.quasy.webservices.model.{Document, DocumentsResult}
 import org.apache.commons.httpclient.cookie.CookiePolicy
+import org.apache.http.params.{CoreConnectionPNames, BasicHttpParams, HttpConnectionParams}
+import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.commons.httpclient.params.DefaultHttpParams
+import org.apache.http.client.params.HttpClientParams
 
 /**
  * @author dirk
@@ -19,7 +23,9 @@ class NlmWebservice {
     private final val articleUrl = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi" //db=pubmed&id=17849242&rettype=xml&retmode=text
 
     private final val LOG = LogFactory.getLog(getClass)
-    private final var httpClient: HttpClient = new HttpClient
+
+    private final var httpClient = new HttpClient()
+    httpClient.getParams.setParameter(CoreConnectionPNames.SO_TIMEOUT,10000)
 
     def getPubmedDocuments(query:String,nr:Int) = {
         val pmids = fetchPmids(query).take(nr)
@@ -78,6 +84,9 @@ class NlmWebservice {
                 httpClient.executeMethod(method)
                 val resultBody = IOUtils.toString(method.getResponseBodyAsStream)
                 val xml = XML.loadString(resultBody)
+                val xTitle = (xml \\ "title")
+                if(!xTitle.isEmpty && xTitle.head.text == "Bad Gateway!")
+                    throw new RuntimeException(resultBody)
 
                 val docs = xml.child.toArray.
                     map(c => (c \ "MedlineCitation")).
@@ -104,6 +113,7 @@ class NlmWebservice {
                     exception.printStackTrace()
                     LOG.error("Servicecall error, trying again!")
                     httpClient = new HttpClient()
+                    httpClient.getParams.setParameter(CoreConnectionPNames.SO_TIMEOUT,10000)
                 }
 
             }

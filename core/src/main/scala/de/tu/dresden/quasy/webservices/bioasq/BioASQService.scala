@@ -164,8 +164,8 @@ object BioASQService {
         getJochemConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")
         getDoidConcepts("What is the role of thyroid hormones administration in the treatment of heart failure?")*/
         //service.getLinkedLifeTriples("Dextrose")
-        val res = service.getPubmedDocuments("21328290[uid]",1)
-        assert(res.documents.head.pmid == "21328290")
+        val res = service.getPubmedDocuments("1234321",1)
+        assert(res.documents.head.pmid == "1234321")
         System.exit(0)
     }
 }

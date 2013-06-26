@@ -67,19 +67,21 @@ class ParagraphTycor(paragraphs:List[AnswerContext]) extends TycorScorer {
                 targetTokens.foreach(targetToken => {
                     answerTokens.foreach(answerToken => {
                         //match if occurs "TARGET ANSWER" or "TARGET BE ANSWER" or ""
-                        if(targetToken.sentence == answerToken.sentence && targetToken != answerToken) {
+                        if(targetToken.sentence == answerToken.sentence) {
                             /*val t = targetToken.sentence.getDependencyTree
                             val targetNode = t.getDepNode(targetToken).get
                             val answerNode = t.getDepNode(answerToken).get*/
 
-                            if((answerToken.depTag.tag.matches("appos|npadvmod") &&
-                                targetToken.position == answerToken.depTag.dependsOn) ||
+                            if( targetToken == answerToken ||
 
-                               (targetToken.depTag.tag == "nn" &&
-                                answerToken.position == targetToken.depTag.dependsOn) ||
+                                answerToken.depTag.tag.matches("appos|npadvmod") &&
+                                targetToken.position == answerToken.depTag.dependsOn ||
 
-                               (answerToken.depTag.tag == "nn" &&
-                                targetToken.position == answerToken.depTag.dependsOn)  )
+                               targetToken.depTag.tag == "nn" &&
+                                answerToken.position == targetToken.depTag.dependsOn ||
+
+                               answerToken.depTag.tag == "nn" &&
+                                targetToken.position == answerToken.depTag.dependsOn  )
                             {
                                 //this is a low scored type score, because these patterns don't necessarily imply that the answer is of the type
                                 score = 0.5
@@ -90,8 +92,8 @@ class ParagraphTycor(paragraphs:List[AnswerContext]) extends TycorScorer {
                                 tSrl.isDefined && aSrl.isDefined && tSrl.get.head == aSrl.get.head &&
                                     targetToken.sentence.getTokens.find(_.position == aSrl.get.head).get.lemma == "be"
                             }||
-                                (targetToken.depTag.tag.matches("appos|npadvmod") &&
-                                    answerToken.position == targetToken.depTag.dependsOn))
+                                targetToken.depTag.tag.matches("appos|npadvmod") &&
+                                    answerToken.position == targetToken.depTag.dependsOn)
                             {
                                 println("tycor evidence: "+answerToken.sentence.coveredText)
                                 return 1.0

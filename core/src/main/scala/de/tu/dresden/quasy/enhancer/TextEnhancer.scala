@@ -10,7 +10,16 @@ import de.tu.dresden.quasy.model.annotation.Annotation
  * Time: 12:46 PM
  */
 abstract class TextEnhancer extends Actor {
-    def enhance(text: AnnotatedText)
+    private val id = this.getClass.getSimpleName
+
+    protected def pEnhance(text: AnnotatedText)
+
+    def enhance(text: AnnotatedText) {
+        if(!text.enhancedBy.contains(id)) {
+            pEnhance(text)
+            text.enhancedBy += id
+        }
+    }
 
     def enhanceBatch(texts:Seq[AnnotatedText]) {
         val batchText = new AnnotatedText(texts.map(_.text).mkString("\n"))

@@ -1,18 +1,21 @@
 package de.tu.dresden.quasy.enhancer.umls
 
+import org.apache.commons.logging.LogFactory
 import de.tu.dresden.quasy.model.{Span, AnnotatedText}
 import de.tu.dresden.quasy.model.annotation.{OntologyEntityMention, Token, UmlsConcept}
+import de.tu.dresden.quasy.model.db.MetaMapCache
+import java.io.{FileOutputStream, OutputStreamWriter, PrintWriter, File}
 import de.tu.dresden.quasy.util.Xmlizer
+import gov.nih.nlm.nls.skr.GenericObject
 import de.tu.dresden.quasy.enhancer.TextEnhancer
-import scala.sys.process._
 
 /**
  * @author dirk
- *          Date: 6/25/13
- *          Time: 3:00 PM
+ *          Date: 6/17/13
+ *          Time: 3:58 PM
  */
-object UmlsEnhancer extends TextEnhancer {
-    private final val pathToMM = "/home/dirk/workspace/public_mm/bin/metamap12"
+object UmlsEnhancerOld extends TextEnhancer {
+    private final val LOG = LogFactory.getLog(getClass)
 
     private final val allowedSTypes = "acab,amas,aapp,anab,anst,antb,biof,bacs,blor,bpoc,carb,crbs,cell,celc,celf,comd,chem,chvf,chvs,clnd,cgab,diap,dsyn,drdd,eico,elii,emst,enzy,food,ffas,fngs,gngp,gngm,genf,hops,horm,inpo,inch,lipd,mobd,moft,mosq,neop,nsba,nnon,nusq,ortf,orch,opco,phsu,rcpt,sosy,strd,sbst,virs,vita".split(",")
     /*
@@ -30,7 +33,7 @@ object UmlsEnhancer extends TextEnhancer {
     protected def pEnhance(text: AnnotatedText) {
         val asciiText = text.text
 
-        val maxLength = 5000
+        val maxLength = 9900
         var last:String = asciiText
         var texts = List[String]()
         while (last.size > maxLength) {
@@ -62,7 +65,7 @@ object UmlsEnhancer extends TextEnhancer {
                                     val begin = beginS.toInt
                                     val end = begin + lengthS.toInt
                                     val beginToken = text.getAnnotations[Token].find(_.contains(offset+begin,offset+begin)).get
-                                    val endToken = text.getAnnotations[Token].find(_.contains(offset+end-1,offset+end-1)).get
+                                    val endToken = text.getAnnotations[Token].find(_.contains(offset+end,offset+end)).get
 
                                     new Span(beginToken.begin,endToken.end)
                                 })
@@ -76,14 +79,77 @@ object UmlsEnhancer extends TextEnhancer {
                     }
                 }
             } )
-            offset += asciiText.length
+            offset += asciiText.length+1
         })
     }
 
-    def requestSemRep(text:String):String =
-        (("echo \""+text+"\"") #| ("sh "+pathToMM+" -AlN")).!!
+    def requestSemRep(text:String):String = {
+        var results = ""//MetaMapCache.getCachedUmlsResponse(text)
+
+        if(results.equals("")) {
+            //myGenericObj.setField("Batch_Command", "semrep -D")
+            //myGenericObj.setField("SilentEmail", true)
+            //myGenericObj.setFileField("UpLoad_File", filename)
+            try {
+                val username = System.getProperty("umlsUsername")
+                val password = System.getProperty("umlsPassword")
+                val email = System.getProperty("umlsEmail")
+                //val myGenericObj = new GenericObject(200,username, password)
+                val myGenericObj = if(text.size > 10000) new GenericObject(username, password) else new GenericObject(100,username, password)
+
+                //TODO read from properties
+                myGenericObj.setField("Email_Address", email)
+
+                if(text.size > 10000) {
+                    val pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream("./batch.txt"),"US-ASCII"))
+                    pw.print(text)
+                    pw.close()
+                    myGenericObj.setField("SilentEmail", true)
+                    myGenericObj.setFileField("UpLoad_File", "./batch.txt")
+                    myGenericObj.setField("Batch_Command", "metamap -AlN")
+                }
+                else {
+                    myGenericObj.setField("APIText", text)
+                    myGenericObj.setField("KSOURCE", "1213")
+                    myGenericObj.setField("COMMAND_ARGS", """-AlN""")
+                }
+
+                // Submit the job request
+                try {
+
+                    results = myGenericObj.handleSubmission
+                    while(!results.contains("Established connection to Tagger Server on localhost")) {
+                        LOG.error("No answer from umls service, trying again!")
+                        Thread.sleep(1000)
+                        results = myGenericObj.handleSubmission
+                    }
+                    //println(results)
+                }
+                catch {
+                    case ex: RuntimeException => {
+                        ex.printStackTrace
+                    }
+                }
+
+                if(text.size > 10000)
+                    new File("./batch.txt").delete()
+
+                //MetaMapCache.addToCache(text, results)
+            }
+            catch {
+                case e:NullPointerException => LOG.error(
+                    """When using UmlsEnhancer you have to specify a umlsUsername and umlsPassword by
+                      | using JVM arguments -DumlsUsername and -DumlsPassword
+                    """.stripMargin)
+            }
+
+        }
+
+        results
+    }
 
     def main(args:Array[String]) {
+
         var text = new AnnotatedText("Screening for psychological risk factors is an important first step in safeguarding against nonadherence practices and identifying patients who may be vulnerable to the risks associated with opioid therapy.")
 
         enhance(text)

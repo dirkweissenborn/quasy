@@ -15,7 +15,7 @@ import collection.immutable
 class GopubmedAnnotator extends TextEnhancer{
     private val service = new GoPubMedService
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         /*val tokens = text.getAnnotations[Token].sortBy(_.begin)
         val newTokenBegins = Map[Int,Token]()
         val newTokenEnds = Map[Int,Token]()

@@ -40,7 +40,7 @@ class FullClearNlpPipeline(val dictionaryFile:File,
 
     private val components: Array[AbstractComponent] = Array(tagger, analyzer, parser, identifier, classifier, verbnet, labeler)
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         val textString = text.text
         var sectionOffset = 0
 

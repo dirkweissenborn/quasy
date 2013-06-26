@@ -9,7 +9,7 @@ import de.tu.dresden.quasy.model.annotation.OntologyEntityMention
  * Time: 10:41 AM
  */
 class OntologyEntitySelector(scoreThreshold:Double, source:String = "") extends TextEnhancer{
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         var oes = text.getAnnotations[OntologyEntityMention]
 
         oes.foreach(oe => oe.ontologyConcepts = oe.ontologyConcepts.filter( oc =>

@@ -12,19 +12,19 @@ import com.google.gson.Gson
 object LoadGoldStandards {
 
     def load(fromFile:File) = {
-        var json =  "[" + Source.fromFile(fromFile).mkString("") + "]"
-        json = json.replaceAll("""\n\{ id: ""","\n,{ id: ")
-        json = json.replaceAll("""exact: '(.+)',""","exact: ['$1'],")
-
+        var json =  Source.fromFile(fromFile).mkString("")
+        json = json.replaceAll(""""exact_answer":\s*("[^"]+")""","\"exact_answer\": [[$1]]").replaceAll(""""exact_answer":\s*(\[[^\]\[]+\])""","\"exact_answer\": [$1]")
         val gson = new Gson()
-        gson.fromJson(json, classOf[Array[QuestionAnswer]])
+        val qs = gson.fromJson(json, classOf[Questions])
+        qs.questions
     }
 
+    case class Questions(questions: Array[QuestionAnswer])
 
-    case class QuestionAnswer(val id:String, val `type`:String, val body:String, val answer:Answer )
+    case class QuestionAnswer(id:String, `type`:String, body:String ,documents:Array[String], exact_answer:Array[Array[String]] )
 
-    case class Answer(val ideal:String, val exact:Array[String], val annotations:Array[Annot])
+    //case class Answer(ideal:String, exact_answer:Array[String], annotations:Array[Annot])
 
-    case class Annot(val `type`:String,val title:String, val uri:String, val text:String, val beginIndex:Int, val endIndex:Int, val fieldName:String)
+    //case class Annot(`type`:String,title:String, uri:String, text:String, beginIndex:Int, endIndex:Int, fieldName:String)
 
 }

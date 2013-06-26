@@ -12,7 +12,7 @@ import de.tu.dresden.quasy.model.annotation.{OntologyConcept, OntologyEntityMent
 object RegexAcronymEnhancer extends TextEnhancer{
     private final val pattern = """([A-Z][A-Z0-9\-\&/]+)|([b-df-hj-np-tv-xzB-DF-HJ-NP-TV-XZ][b-df-hj-np-tv-xzB-DF-HJ-NP-TV-Z0-9\-\&/]{3,})"""
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         text.getAnnotations[Token].filter(t => t.posTag.matches(PosTag.ANYNOUN_PATTERN) && t.coveredText.matches(pattern)).foreach(t => {
             if (!text.getAnnotations[OntologyEntityMention].exists(_.contains(t.begin,t.end)))
                 new OntologyEntityMention(t.begin,t.end,t.context,

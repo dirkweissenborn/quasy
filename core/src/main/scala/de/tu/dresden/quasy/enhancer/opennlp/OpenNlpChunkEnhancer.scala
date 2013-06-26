@@ -32,7 +32,7 @@ class OpenNlpChunkEnhancer(val modelFile:File) extends TextEnhancer{
         }
     }
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         text.getAnnotations[Sentence].foreach(sentence => {
             val tokens = sentence.getTokens.toArray
             val tags = sentence.getTokens.map(_.posTag)

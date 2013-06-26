@@ -8,7 +8,6 @@ import org.apache.lucene.util.Version
 import de.tu.dresden.quasy.model.db.{UmlsSemanticNetwork, LuceneIndex}
 import de.tu.dresden.quasy.dependency.DepNode
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
-import org.apache.lucene.search.TopDocs
 
 /**
  * @author dirk
@@ -17,9 +16,9 @@ import org.apache.lucene.search.TopDocs
  */
 class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
     //Everything under anatomical structure and spatial concept
-    private final val whereAnswerTypes = Array("anst", "emst", "anab", "cgab", "acab", "ffas", "bpoc", "tisu", "cell", "celc", "gngm", "spco", "bsoj", "blor", "mosq", "nusq", "amas", "crbs", "geoa")
+    private final val whereAnswerTypes = Set("anst", "emst", "anab", "cgab", "acab", "ffas", "bpoc", "tisu", "cell", "celc", "gngm", "spco", "bsoj", "blor", "mosq", "nusq", "amas", "crbs", "geoa")
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         text.getAnnotations[Question].foreach(question => {
             //What be ...? - questions
             val chunks = text.getAnnotationsBetween[Chunk](question.begin, question.end)
@@ -31,7 +30,7 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
                 target match {
                     case ConceptualAnswerType(_, concepts) => {
                         val semanticTypes = concepts.filter(_.isInstanceOf[UmlsConcept]).map(_.asInstanceOf[UmlsConcept]).flatMap(_.semanticTypes).toSet
-                        var answerTypes = semanticTypes.flatMap(st => UmlsSemanticNetwork.?("?", "part_of", st).map(_._1)).toSet.toArray
+                        var answerTypes = semanticTypes.flatMap(st => UmlsSemanticNetwork.?("?", "part_of", st).map(_._1)).toSet
                         if (answerTypes.isEmpty)
                             answerTypes = whereAnswerTypes
                         question.answerType = SemanticAnswerType(answerTypes)
@@ -42,7 +41,14 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
             else if (question.coveredText.toLowerCase.startsWith("where"))
                 question.answerType = SemanticAnswerType(whereAnswerTypes)
 
-
+            else if(question.coveredText.toLowerCase.startsWith("list")){
+                question.answerType = extractOntologyEntityMention(chunks(0).getTokens.drop(1)) match {
+                    case (Some(oem),targets) => {
+                        ConceptualAnswerType(targets, oem.ontologyConcepts)
+                    }
+                    case (None,targets) => SimpleAnswerType(targets)
+                }
+            }
             //########## WHAT ########################
             else if (WHAT_BE_NP(chunks) || NP_PP_WHAT_NP_VP(chunks)) {
                 question.answerType = extractTargetTypes(chunks(2))
@@ -57,14 +63,14 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
                 question.getTokens.find(t => t.srls.exists(srl => question.getTokens(srl.head-1).depDepth == 0 && srl.label.matches("A[03]"))) match {
                     case Some(token) => {
                         val subjTokens =
-                            question.getDependencyTree.getSubtree(token).nodes.toList.
+                            question.dependencyTree.getSubtree(token).nodes.toList.
                             map(_.value.asInstanceOf[DepNode]).flatMap(_.tokens).toList.sortBy(_.position).filterNot(_.posTag.equals(PosTag.Preposition_or_subordinating_conjunction))
 
                         extractOntologyEntityMention(subjTokens) match {
                             case (Some(oem),_) => {
                                 val semanticTypes = oem.ontologyConcepts.filter(_.isInstanceOf[UmlsConcept]).map(_.asInstanceOf[UmlsConcept]).flatMap(_.semanticTypes).toSet
                                 val answerTypes = semanticTypes.flatMap(st =>
-                                    UmlsSemanticNetwork.?(st, ".*"+question.getTokens.find(_.depDepth == 0).get.lemma+".*", "?").map(_._3)).toSet.toArray
+                                    UmlsSemanticNetwork.?(st, ".*"+question.getTokens.find(_.depDepth == 0).get.lemma+".*", "?").map(_._3)).toSet
                                 question.answerType = SemanticAnswerType(answerTypes)
                             }
                             case (None,_) =>
@@ -77,14 +83,14 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
                 question.getTokens.find(t => t.srls.exists(srl => question.getTokens(srl.head-1).depDepth == 0 && srl.label.matches("A[12]"))) match {
                     case Some(token) => {
                         val objTokens =
-                            question.getDependencyTree.getSubtree(token).nodes.toList.
+                            question.dependencyTree.getSubtree(token).nodes.toList.
                                 map(_.value.asInstanceOf[DepNode]).flatMap(_.tokens).toList.sortBy(_.position)
 
                         extractOntologyEntityMention(objTokens) match {
                             case (Some(oem),_) => {
                                 val semanticTypes = oem.ontologyConcepts.filter(_.isInstanceOf[UmlsConcept]).map(_.asInstanceOf[UmlsConcept]).flatMap(_.semanticTypes).toSet
                                 val answerTypes = semanticTypes.flatMap(st =>
-                                    UmlsSemanticNetwork.?("?", ".*"+question.getTokens.find(_.depDepth == 0).get.lemma+".*", st).map(_._1)).toSet.toArray
+                                    UmlsSemanticNetwork.?("?", ".*"+question.getTokens.find(_.depDepth == 0).get.lemma+".*", st).map(_._1)).toSet
                                 question.answerType = SemanticAnswerType(answerTypes)
                             }
                             case (None,_) =>
@@ -101,7 +107,7 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
                 //Is Rheumatoid Arthritis !more common! in ...? -> acomp
                 question.getTokens.find(t => t.depDepth == 1 && t.depTag.tag.matches("acomp|attr")) match {
                     case Some(t) => {
-                        val depTree = question.getDependencyTree
+                        val depTree = question.dependencyTree
                         val nodes = depTree.getSubtree(t).nodes.toList.map(_.value.asInstanceOf[DepNode])
                         criterion = nodes.filter(_.nodeHead.position <= t.position).flatMap(_.tokens).toSeq.sortBy(_.position).map(_.coveredText).mkString(" ")
                     }
@@ -154,6 +160,8 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
             result.totalHits < 100 && !targets.isEmpty
         })
             targets = targets.drop(1)
+        if(targets.isEmpty)
+            targets = targetTokens
 
         val begin = targets.minBy(_.begin).begin
         val end = targets.maxBy(_.end).end

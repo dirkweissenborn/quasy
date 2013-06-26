@@ -21,7 +21,7 @@ class FullStanfordNlpEnhancer extends TextEnhancer{
 
     private val pipeline = new StanfordCoreNLP(props)
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         val document = new Annotation(text.text)
 
         // run all Annotators on this text

@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory
 import org.apache.lucene.analysis.KeywordAnalyzer
 import java.text.Normalizer
 import org.apache.lucene.search.Query
-import de.tu.dresden.quasy.model.db.LuceneIndex
+import de.tu.dresden.quasy.model.db.{AnnotationCache, LuceneIndex}
 
 /**
  * @author dirk
@@ -37,7 +37,7 @@ class LuceneFetcher(luceneIndex:LuceneIndex) extends CandidateFetcher {
             val doc = luceneIndex.searcher.doc(scoreDoc.doc)
             var text = doc.get("title") + "\n" + doc.get("contents")
             text = Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", " ")
-            new AnnotatedText(doc.get("pmid"), text)
+            AnnotationCache.getCachedAnnotatedTextOrElse(text, new AnnotatedText(doc.get("pmid"), text))
         }).groupBy(_.id).map(_._2.head).take(docCount).toArray
 
         extractAnswerCandidates(texts, question, pipeline)

@@ -16,6 +16,9 @@ class GoldStandardCsvWriter(goldStandards:Map[Question,Set[String]], out:File) e
     private var scoreTypes = List[(FactoidAnswer) => Double]()
 
     def processFactoid(factoidAnswer: FactoidAnswer) {
+        if(!goldStandards.contains(factoidAnswer.question))
+            return
+
         if (scoreTypes.isEmpty) {
             writeFirstLine(factoidAnswer)
         }
@@ -23,6 +26,7 @@ class GoldStandardCsvWriter(goldStandards:Map[Question,Set[String]], out:File) e
         pw.println("#"+factoidAnswer.question.coveredText+" -> "+factoidAnswer.answerText)
 
         pw.println(scoreTypes.map(_(factoidAnswer).toString).mkString(","))
+        pw.flush()
     }
 
 

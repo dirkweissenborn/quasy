@@ -17,7 +17,7 @@ import collection.immutable
 abstract class BioASQOEEnhancer(serviceCall: String => BioASQServiceResult, source:String, minScore:Double=0.0) extends TextEnhancer {
     private val LOG = LogFactory.getLog(getClass)
 
-    def enhance(text: AnnotatedText) {
+    protected def pEnhance(text: AnnotatedText) {
         val result =  serviceCall(text.text)
 
         if (result != null) {

@@ -8,7 +8,7 @@ import model.{FactoidAnswer}
 import java.util.Properties
 import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.io.AnnotatedTextSource
-import de.tu.dresden.quasy.enhancer.umls.UmlsEnhancer
+import de.tu.dresden.quasy.enhancer.umls.{UmlsEnhancerOld, UmlsEnhancer}
 import de.tu.dresden.quasy.enhancer.{EnhancementPipeline}
 import de.tu.dresden.quasy.enhancer.regex.RegexAcronymEnhancer
 import de.tu.dresden.quasy.enhancer.clearnlp.{FullClearNlpPipeline}
@@ -43,7 +43,7 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
         println(text.getAnnotationsBetween[Chunk](question.begin,question.end).map(_.toString).mkString("\t"))
         println()
         println(question.printRoleLabels)
-        println(question.getDependencyTree.prettyPrint)
+        println(question.dependencyTree.prettyPrint)
         println()
         if (question.answerType!=null) {
             println("target type: "+ question.answerType.toString)
@@ -73,7 +73,7 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
     }
 
     def answerFactoid(question:Question, pmids:List[Int]):List[(FactoidAnswer,Double)] = {
-        List(answerList(question,pmids).head)
+        answerList(question,pmids)
     }
 
     def answerList(question:Question, pmids:List[Int]):List[(FactoidAnswer,Double)] = {
@@ -91,7 +91,7 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
             if (pmids != null)
                 fetcher.fetchByPmid(question,pmids)
             else
-                fetcher.fetch(question,10)
+                fetcher.fetch(question,5)
 
         println("done")
 
@@ -152,15 +152,9 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
             -FinalConceptScorer.scoreInternal(a))
         sortedCandidates = sortedCandidates.take(50)
 
-        sortedCandidates.foreach(fa => {
+        sortedCandidates.foreach(fa =>{
             idfScorer.score(fa)
             paragraphTycor.score(fa)
-        })
-
-        sortedCandidates = answerCandidates.toSeq.sortBy(a => -FinalConceptScorer.scoreInternal(a))
-        sortedCandidates = sortedCandidates.take(40)
-
-        sortedCandidates.foreach(fa =>{
             supportingEvidenceTycor.score(fa)
             FinalConceptScorer.score(fa)
             println("scored: "+fa.answer.preferredLabel)
@@ -186,16 +180,11 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
 
         sortedCandidates = sortedCandidates.sortBy(-_.score[FinalConceptScorer.type])
 
-        /*
-        println()
-        sortedCandidates.foreach(fa => {
-            if (evalWriter ne null)
-                evalWriter.writeFactoidEval(fa)
-            println(fa.answer.conceptId+"-"+fa.answer.preferredLabel+"="+fa.score[FinalConceptScorer.type])
-        })
-        */
-
-        sortedCandidates.map(cand => (cand,cand.score[FinalConceptScorer.type])).toList
+        val mappedCandidates = sortedCandidates.map(cand => (cand,cand.score[FinalConceptScorer.type])).toList
+        if(question.questionType == FactoidQ)
+            mappedCandidates.take(5)
+        else
+            mappedCandidates.take(1) ++ mappedCandidates.drop(1).takeWhile(_._2 >= -2.5)
     }
 
     def answerFactoidDecision(question:Question, pmids:List[Int]):List[(FactoidAnswer,Double)] = {
@@ -232,7 +221,9 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
           flatMap(oem => oem.ontologyConcepts.map( (_,oem.coveredText) ))).
           groupBy(_._1).foreach{
             case (_,synonyms) => {
-                val synSet = synonyms.map(_._2).toSet
+                val synSet = synonyms.map(s => {
+                    s._2.split(" ").zipWithIndex.groupBy(_._1).toSeq.map(e => (e._1,e._2.minBy(_._2)._2)).sortBy(_._2).map(_._1).mkString(" ")
+                }).toSet
                 synonyms.foreach{
                     case (oc,_) => oc.synonyms = synSet
                 }

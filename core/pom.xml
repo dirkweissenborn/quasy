@@ -20,6 +20,12 @@
     </dependency>
 
     <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+    </dependency>
+
+
+    <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>
@@ -128,6 +134,35 @@
       <version>1.6.2</version>
       <scope>system</scope>
       <systemPath>${libpath}/graph-core_2.9.2-1.6.2.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>prologbeans</groupId>
+      <artifactId>prologbeans</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/prologbeans.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>metamap</groupId>
+      <artifactId>metamap</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/MetaMapApi.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>styla</groupId>
+      <artifactId>styla</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${libpath}/styla.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>jline</artifactId>
     </dependency>
 
     <dependency>

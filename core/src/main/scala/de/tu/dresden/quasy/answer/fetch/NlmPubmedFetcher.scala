@@ -1,6 +1,6 @@
 package de.tu.dresden.quasy.answer.fetch
 
-import de.tu.dresden.quasy.model.AnnotatedText
+import de.tu.dresden.quasy.model.{PosTag, AnnotatedText}
 import de.tu.dresden.quasy.webservices.bioasq.BioASQService
 import de.tu.dresden.quasy.answer.model.AnswerContext
 import de.tu.dresden.quasy.enhancer.{EnhancementPipeline}
@@ -8,6 +8,7 @@ import de.tu.dresden.quasy.model.annotation._
 import java.text.Normalizer
 import de.tu.dresden.quasy.webservices.model.DocumentsResult
 import de.tu.dresden.quasy.webservices.nlm.NlmWebservice
+import de.tu.dresden.quasy.model.db.AnnotationCache
 
 /**
  * @author dirk
@@ -17,11 +18,11 @@ import de.tu.dresden.quasy.webservices.nlm.NlmWebservice
 class PubmedFetcher(serviceCall:(String,Int)=>DocumentsResult) extends CandidateFetcher{
 
     def fetch(question: Question, docCount:Int, pipeline:EnhancementPipeline = null) = {
-        val query: String =
-            question.context.getAnnotationsBetween[OntologyEntityMention](question.begin,question.end).
+        val query: String = question.context.getAnnotations[Token].filter(_.posTag.matches(PosTag.ANYNOUN_PATTERN +"|"+PosTag.ANYADJECTIVE_PATTERN)).map(_.coveredText).mkString(" ")
+            /*question.context.getAnnotationsBetween[OntologyEntityMention](question.begin,question.end).
             map(oem => {
                 "\""+oem.coveredText+"\""
-            }).mkString(" ")
+            }).mkString(" ")   */
         fetchWithQuery(query, docCount, question, pipeline)
     }
 
@@ -33,12 +34,19 @@ class PubmedFetcher(serviceCall:(String,Int)=>DocumentsResult) extends Candidate
         val texts = documents.documents.flatMap(document => {
             var result = List[AnnotatedText]()
             if (document.documentAbstract != null)
-                result ::= new AnnotatedText(document.pmid+"-a",Normalizer.normalize(document.documentAbstract.replace("\n", " "), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", " "))
+                result ::= {
+                    val id = document.pmid + "-a"
+                    val text = Normalizer.normalize(document.documentAbstract.replace("\n", " "), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", " ")
+                    AnnotationCache.getCachedAnnotatedTextOrElse( text, new AnnotatedText(id,text))
+                }
 
             if (document.sections != null)
                 result ++= document.sections.zipWithIndex.map{
-                    case (section,id) =>
-                        new AnnotatedText(document.pmid+"-s"+id,Normalizer.normalize(section.replace("\n", " "), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]"," "))
+                    case (section,docId) => {
+                        val id = document.pmid + "-s" + docId
+                        val text = Normalizer.normalize(section.replace("\n", " "), Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", " ")
+                        AnnotationCache.getCachedAnnotatedTextOrElse( text, new AnnotatedText(id,text))
+                    }
                 }
 
             result

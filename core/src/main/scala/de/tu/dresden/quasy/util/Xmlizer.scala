@@ -43,11 +43,11 @@ object Xmlizer {
 
         xstream.omitField(clazz,"tokens")
 
-        xstream.omitField(classOf[Sentence],"dependencyTree")
+        xstream.omitField(classOf[Sentence],"_dependencyTree")
 
         xstream.omitField(classOf[DepTag],"headToken")
-        xstream.omitField(classOf[Token],"sentence")
-        xstream.omitField(classOf[Token],"depDepth")
+        xstream.omitField(classOf[Token],"_sentence")
+        xstream.omitField(classOf[Token],"_depDepth")
 
         xstream.omitField(classOf[Any],"bitmap$0")
     }
