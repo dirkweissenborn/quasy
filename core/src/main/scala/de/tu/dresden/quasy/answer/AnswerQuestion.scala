@@ -22,6 +22,7 @@ import de.tu.dresden.quasy.model.annotation.DecisionAnswerType
 import scala.Right
 import score.factoid.tycor.{UmlsTycor, SupportingEvidenceTycor, ParagraphTycor}
 import de.tu.dresden.quasy.similarity.WordnetSimilarity
+import org.apache.lucene.util.Version
 
 /**
  * @author dirk
@@ -29,7 +30,7 @@ import de.tu.dresden.quasy.similarity.WordnetSimilarity
  * Time: 11:47 AM
  */
 class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
-    private val luceneIndex = LuceneIndex.fromConfiguration(config)
+    private val luceneIndex = LuceneIndex.fromConfiguration(config, Version.LUCENE_36)
     private val fullClearNlp = FullClearNlpPipeline.fromConfiguration(config)
     private val chunker = OpenNlpChunkEnhancer.fromConfiguration(config)
     private val fullPipeline = new EnhancementPipeline(List(fullClearNlp, chunker, UmlsEnhancer, RegexAcronymEnhancer))
