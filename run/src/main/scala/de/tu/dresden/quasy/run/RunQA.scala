@@ -13,6 +13,7 @@ import umls.UmlsEnhancer
 import de.tu.dresden.quasy.answer.AnswerQuestion
 import de.tu.dresden.quasy.model.db.{AnnotationCache, MetaMapCache, ScoreCache, LuceneIndex}
 import de.tu.dresden.quasy.answer.postprocess.{CacheUpdater, AnswerPostProcesserSet, GoldStandardCsvWriter}
+import org.apache.lucene.util.Version
 
 /**
  * @author dirk
@@ -77,7 +78,7 @@ object RunQA {
         ScoreCache.loadCache(new File(cacheDir,questionsFile.getName+".scores"))
         AnnotationCache.loadCache(new File(cacheDir,questionsFile.getName+".annots"))
 
-        val luceneIndex = LuceneIndex.fromConfiguration(props)
+        val luceneIndex = LuceneIndex.fromConfiguration(props,Version.LUCENE_36)
 
         val fullClearNlp = FullClearNlpPipeline.fromConfiguration(props)
         val chunker = OpenNlpChunkEnhancer.fromConfiguration(props)
@@ -102,8 +103,8 @@ object RunQA {
 
             text.getAnnotations[Question].foreach(q => {
                 q.questionType = QuestionType.fromString(qa.`type`)
-                //if(qa. != null)
-                  //  qas += (q -> qa.answer.exact.toSet)
+                //if(qa.exact_answer != null)
+                    //qas += (q -> qa.exact_answer.toSet)
             })
             (qa,text)
         })
@@ -118,9 +119,9 @@ object RunQA {
         val answerer = new AnswerQuestion(props,evaluation)
 
         texts.foreach{ case (qa,text) => {
-            val pmids = /*if(qa.documents ne null)
+            val pmids = if(qa.documents ne null)
                 qa.documents.map(doc => doc.substring(doc.lastIndexOf("/")+1).toInt).toList
-            else */
+            else
                 null
 
             //Should be one

@@ -20,7 +20,7 @@ syntax: glob
 
 # building
 ctakes-enhancer/resources
-model
+modelz
 ctakes
 target
 build

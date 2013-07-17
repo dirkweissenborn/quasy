@@ -45,13 +45,13 @@
       <systemPath>${libpath}/graph-core_2.9.2-1.6.2.jar</systemPath>
     </dependency>
 
-    <dependency>
+    <!--dependency>
       <groupId>pitt.search</groupId>
       <artifactId>semantic-vectors</artifactId>
       <version>3.8</version>
       <scope>system</scope>
       <systemPath>${libpath}/semanticvectors-3.8.jar</systemPath>
-    </dependency>
+    </dependency-->
 
     <dependency>
       <groupId>org.apache.lucene</groupId>
@@ -73,6 +73,21 @@
           <artifactId>lucene-join</artifactId>
       </dependency>
 
+
+      <dependency>
+          <groupId>cc.mallet</groupId>
+          <artifactId>mallet</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-compress</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>com.thoughtworks.xstream</groupId>
+          <artifactId>xstream</artifactId>
+      </dependency>
 
   </dependencies>
 

@@ -1,4 +1,4 @@
-package de.tu.dresden.quasy.run
+package de.tu.dresden.quasy.index
 
 import org.apache.commons.logging.LogFactory
 import java.io._
@@ -98,7 +98,8 @@ object IndexMetaMappedBaseline {
                                 if (future != null)
                                     future.apply()
                                 future = writingActor !! Some(mmUtterance)
-                            }
+                            } else
+                                analyze = false  // This item was not indexed so it might be that the following items are already indexed
                         }
 
                         counter += 1

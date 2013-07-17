@@ -36,7 +36,7 @@ case class LuceneIndex(luceneIndex:File, var analyzer: Analyzer = new EnglishAna
 
 object LuceneIndex{
     var index:LuceneIndex = null
-    def fromConfiguration(config:Properties, version:Version):LuceneIndex = {
+    def fromConfiguration(config:Properties, version:Version = Version.LUCENE_40):LuceneIndex = {
         if (index == null)
             index = LuceneIndex({
                 val indexPath: String = config.getProperty("lucene.index")

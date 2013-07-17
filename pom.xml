@@ -7,7 +7,7 @@
     <version>0.1-SNAPSHOT</version>
     <modules>
         <module>core</module>
-        <module>ctakes-enhancer</module>
+        <!--module>ctakes-enhancer</module-->
         <module>run</module>
     </modules>
     <name>${project.artifactId}</name>
@@ -134,7 +134,14 @@
             <version>3.1</version>
           </dependency>
 
-          <dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.5</version>
+            </dependency>
+
+
+            <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.1.1</version>

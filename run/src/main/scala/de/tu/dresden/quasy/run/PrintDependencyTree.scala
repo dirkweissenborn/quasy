@@ -10,6 +10,7 @@ import de.tu.dresden.quasy.enhancer.opennlp.OpenNlpChunkEnhancer
 import de.tu.dresden.quasy.enhancer.QuestionEnhancer
 import de.tu.dresden.quasy.model.db.LuceneIndex
 import de.tu.dresden.quasy.enhancer.umls.UmlsEnhancer
+import org.apache.lucene.util.Version
 
 /**
  * @author dirk
@@ -24,7 +25,7 @@ object PrintDependencyTree {
 
           val pipeline = FullClearNlpPipeline.fromConfiguration(props)
           val chunker = OpenNlpChunkEnhancer.fromConfiguration(props)
-          val qE =  new QuestionEnhancer(LuceneIndex.fromConfiguration(props))
+          val qE =  new QuestionEnhancer(LuceneIndex.fromConfiguration(props,Version.LUCENE_36))
 
           var sentence = ""
           while(sentence != "a") {

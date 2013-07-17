@@ -12,7 +12,6 @@
 
   <artifactId>core</artifactId>
 
-
   <dependencies>
     <dependency>
       <groupId>org.scala-lang</groupId>
@@ -213,13 +212,13 @@
           <artifactId>lucene-analyzers-common</artifactId>
       </dependency>
 
-    <dependency>
+    <!--dependency>
       <groupId>pitt.search</groupId>
       <artifactId>semantic-vectors</artifactId>
       <version>3.8</version>
       <scope>system</scope>
       <systemPath>${libpath}/semanticvectors-3.8.jar</systemPath>
-    </dependency>
+    </dependency-->
 
 
   </dependencies>

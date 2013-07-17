@@ -1,4 +1,4 @@
-package de.tu.dresden.quasy.run
+package de.tu.dresden.quasy.index
 
 import java.io.{InputStream, FileInputStream, File}
 import io.Source
