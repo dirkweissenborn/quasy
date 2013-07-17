@@ -2,14 +2,14 @@ package de.tu.dresden.quasy.answer.fetch
 
 import de.tu.dresden.quasy.model.annotation.{OntologyEntityMention, Question}
 import org.apache.lucene.util.Version
-import org.apache.lucene.queryParser.QueryParser
 import de.tu.dresden.quasy.enhancer.EnhancementPipeline
 import de.tu.dresden.quasy.model.AnnotatedText
 import org.apache.commons.logging.LogFactory
-import org.apache.lucene.analysis.KeywordAnalyzer
 import java.text.Normalizer
 import org.apache.lucene.search.Query
 import de.tu.dresden.quasy.model.db.{AnnotationCache, LuceneIndex}
+import org.apache.lucene.queryparser.classic.QueryParser
+import org.apache.lucene.analysis.core.KeywordAnalyzer
 
 /**
  * @author dirk

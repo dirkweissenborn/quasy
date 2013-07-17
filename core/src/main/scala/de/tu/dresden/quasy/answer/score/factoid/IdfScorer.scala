@@ -1,7 +1,7 @@
 package de.tu.dresden.quasy.answer.score.factoid
 
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
-import org.apache.lucene.queryParser.QueryParser
+import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.util.Version
 import de.tu.dresden.quasy.model.db.LuceneIndex
 

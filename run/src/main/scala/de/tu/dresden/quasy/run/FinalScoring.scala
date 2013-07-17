@@ -26,12 +26,15 @@ object Appppp extends App {
     val goldAnswers = LoadGoldStandards.load(new File("corpus/questions.0.json"))
     ScoreCache.loadCache(new File("cache/questions.0.json.scores"))
 
-    val answers = ScoreCache.cache.map(q =>
+    val answers = ScoreCache.cache.map(q => {
+        println(q._1)
         (q._1,
             q._2.map(answerScores => {
                 val answer = answerScores._1
                 val scores = answerScores._2
 
+                //println(answer)
+                //println(scores.map(s => "    "+s._1+"->"+s._2).mkString("\n"))
                 val score =
                     scores("de.tu.dresden.quasy.answer.score.factoid.tycor.UmlsTycor$") * 2.9192 +
                         scores("de.tu.dresden.quasy.answer.score.factoid.tycor.ParagraphTycor") * 3.0907 +
@@ -42,7 +45,7 @@ object Appppp extends App {
                         6.1447
 
                 (answer, score)
-            }))).toMap
+            }))}).toMap
 
 
     /*println("""{"system": "BioASQ_Baseline_1bB", "username": "gbt", "password": "gr1979",

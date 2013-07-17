@@ -4,7 +4,7 @@ import de.tu.dresden.quasy.enhancer.clearnlp.FullClearNlpPipeline
 import java.util.Properties
 import de.tu.dresden.quasy.dependency.DependencyTree
 import de.tu.dresden.quasy.model.AnnotatedText
-import de.tu.dresden.quasy.model.annotation.{Question, Chunk, Sentence}
+import de.tu.dresden.quasy.model.annotation.{OntologyEntityMention, Question, Chunk, Sentence}
 import java.io.{FileInputStream, File}
 import de.tu.dresden.quasy.enhancer.opennlp.OpenNlpChunkEnhancer
 import de.tu.dresden.quasy.enhancer.QuestionEnhancer
@@ -33,7 +33,7 @@ object PrintDependencyTree {
               val text = new AnnotatedText(sentence)
               pipeline.enhance(text)
               chunker.enhance(text)
-              UmlsEnhancer.enhance(text)
+              //UmlsEnhancer.enhance(text)
               qE.enhance(text)
 
 
@@ -41,6 +41,7 @@ object PrintDependencyTree {
                   println(s.getTokens.map(t => t.coveredText+"_"+t.posTag).mkString(" "))
                   println(s.dependencyTree.prettyPrint+"\n")
                   println(s.printRoleLabels)
+                  //println(s.getAnnotationsWithin[OntologyEntityMention].map(_.toString).mkString("\t"))
                   println(s.getAnnotationsWithin[Chunk].map(_.toString).mkString("\t"))
                   if (s.isInstanceOf[Question])
                       println(s.asInstanceOf[Question].answerType)

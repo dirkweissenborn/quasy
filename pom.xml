@@ -9,7 +9,6 @@
         <module>core</module>
         <module>ctakes-enhancer</module>
         <module>run</module>
-      <module>utility</module>
     </modules>
     <name>${project.artifactId}</name>
     <description>BioASQ QA System</description>
@@ -60,16 +59,30 @@
           <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>3.6.2</version>
+            <version>4.0.0</version>
           </dependency>
 
-          <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers</artifactId>
-            <version>3.6.2</version>
-          </dependency>
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-queryparser</artifactId>
+                <version>4.0.0</version>
+            </dependency>
 
-          <!-- Test -->
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-analyzers-common</artifactId>
+                <version>4.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.lucene</groupId>
+                <artifactId>lucene-join</artifactId>
+                <version>4.0.0</version>
+            </dependency>
+
+
+
+            <!-- Test -->
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>

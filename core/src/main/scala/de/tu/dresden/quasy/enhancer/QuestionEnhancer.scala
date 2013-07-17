@@ -3,11 +3,11 @@ package de.tu.dresden.quasy.enhancer
 import de.tu.dresden.quasy.model.{PosTag, AnnotatedText}
 import de.tu.dresden.quasy.model.annotation._
 import scala.Some
-import org.apache.lucene.queryParser.QueryParser
 import org.apache.lucene.util.Version
 import de.tu.dresden.quasy.model.db.{UmlsSemanticNetwork, LuceneIndex}
 import de.tu.dresden.quasy.dependency.DepNode
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
+import org.apache.lucene.queryparser.classic.QueryParser
 
 /**
  * @author dirk
@@ -186,7 +186,7 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
     def WHAT_NP_VP(chunks: List[Chunk]) =
         chunks.head.chunkType.equals("NP") &&
         chunks(1).chunkType.equals("VP") &&
-            chunks.head.coveredText.matches(whatWhichPattern + ".+")
+            chunks.head.coveredText.matches(".*"+whatWhichPattern + ".+")
 
     def NP_PP_WHAT_NP_VP(chunks: List[Chunk]) =
         chunks.head.chunkType.equals("NP") &&
@@ -197,10 +197,12 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
 
     //Which forms of cancer are ...?
     def WHAT_NP_PP_NP_VP(chunks: List[Chunk]) =
+        chunks.size > 3 &&
         chunks.head.chunkType.equals("NP") &&
             chunks.head.coveredText.matches(whatWhichPattern + ".+") &&
             chunks(1).chunkType.equals("PP") &&
-            chunks(2).chunkType.equals("NP")
+            chunks(2).chunkType.equals("NP") &&
+            chunks(3).chunkType.equals("VP")
 
     def WHAT_DO_STH_DO(question:Question) =
         question.getTokens.head.lemma.matches(whatWhichPattern) &&
@@ -221,4 +223,28 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
     final val wherePattern = "(Where|where)"
 
     final val targetTypePosPattern = PosTag.ANYNOUN_PATTERN + "|" + PosTag.Adjective
+
+    /*
+    TODO
+    Which is the molecular mechanism underlying K-ras alterations in carcinomas?
+
+K[UMLS-Potassium Ion]	ras[UMLS-ras Oncogene]	carcinomas[UMLS-Carcinoma]
+Chunk_NP[Which]	Chunk_VP[is]	Chunk_NP[the molecular mechanism underlying K-ras alterations]	Chunk_PP[in]	Chunk_NP[carcinomas]
+
+R-A1(be,Which)	A2(be,the molecular mechanism underlying K - ras alterations in carcinomas)	A1(underlie,K - ras alterations)	AM-LOC(underlie,in carcinomas)
+		2:nsubj:which:1
+0:root:be:2
+				5:det:the:3
+				5:amod:molecular:4
+		2:attr:mechanism:5
+				5:partmod:underlie:6
+										9:hmod:k:7
+										9:hyph:-:8
+								10:nn:ra:9
+						6:dobj:alteration:10
+						6:prep:in:11
+								11:pobj:carcinoma:12
+		2:punct:?:13
+		target type: SimpleAnswerType(List(Token[ras], Token[alterations]))
+     */
 }

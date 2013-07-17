@@ -1,515 +1,155 @@
 package de.tu.dresden.quasy.util
 
 import scala.util.parsing.combinator._
-import scala.collection.mutable._
 import prolog.io.IO
 
-//import scala.Console
-import prolog.terms._
-import prolog.builtins._
 
-class MachineOutputParser(val vars: LinkedHashMap[String, Var])
-    extends RegexParsers {
-    def this() = this(new LinkedHashMap[String, Var])
+object MachineOutputParser extends RegexParsers {
 
-    def mkVar(x0: String) = {
-        val x = if ("_" == x0) x0 + x0 + vars.size else x0
-        vars.getOrElseUpdate(x, new Var())
-    }
+    val singleQuote:Parser[String] = "'" ~> """(\\'|[^']|''|'(?![,\[\]()]))*""".r <~ "'"
+    val doubleQuote:Parser[String] = "\"" ~> """(\\"|[^"]|""|"(?![,\[\]()]))*""".r <~ "\""
+    val symbol:Parser[String] = """[^,\n()\[\]]*""".r
+    val number:Parser[String] = """-?\d+""".r
+    val symbolOrQuote:Parser[String] = singleQuote | symbol
 
-    def trimQuotes(q: String) = q.substring(1, q.length() - 1)
+    def stringList:Parser[List[String]] = "[" ~> repsep(symbol,",") <~ "]"
 
-    protected override val whiteSpace = """(\s|%.*|(?m)/\*(\*(?!/)|[^*])*\*/)+""".r
+    def list[T](elements:Parser[T]):Parser[List[T]] = "[" ~> repsep(elements,",") <~ "]"
 
-    val varToken: Parser[String] = """[A-Z_]\w*""".r
-    val realToken: Parser[String] = """-?(\d+)\.\d*""".r
-    val numToken: Parser[String] = """-?(\d+)""".r
-    val symToken: Parser[String] = """[^,()\[\]]+|[()\[\]]""".r
-    val bracketToken:Parser[String] = """\[[^\[\]]*\]""".r
-
-    //val specToken: Parser[String] = """[!\+\-\*/>=<]|\\\+|\[\]""".r
-    val specToken: Parser[String] = """[!]|\\\+|\[\]""".r
-    val quotedToken: Parser[String] = """\'[^']*\'""".r
-    val stringToken: Parser[String] = """[^"]*""".r
-    val eocToken: Parser[String] = """\.[\n\r\f\t]*""".r
-
-    val dcgTopToken: Parser[String] = """-->""".r
-    val topToken = """:-""".r
-    val clauseTok = topToken | dcgTopToken
-    val disjTok = """;""".r
-    val implTok = """->""".r
-    val conjTok = """,""".r
-    val isTok = """is|==|\\==|=\\=|@=<|@>=|@<|@>|=>|<=|=\.\.|>=|=<|=:=|=|>|<""".r
-    val plusTok = """\+|\-""".r
-    val timesTok = """\*|/\\|\\/|//|/|mod|div|:|<<|>>|\^""".r
-
-    def idToken: Parser[String] =
-        ( (symToken ~ bracketToken) ^^ {
-            case a~b =>
-                a+b
-        } ) |
-            (quotedToken ^^ { trimQuotes } | specToken | symToken
-        ) ^^ { x => x.replace("\\n", "\n") }
-
-    def prog: Parser[List[List[Term]]] = (cmd | clause)*
-
-    def cmd: Parser[List[Term]] = (topToken ~> conj <~ eocToken) ^^ mk_cmd
-
-    def mk_cmd(bs: List[Term]) = {
-        /*
-        val f = new Fun(":-")
-        f.args = new Array[Term](1)
-        val c = TermParser.postProcessBody(Const.nil, bs)
-        f.args(0) = Conj.fromList(c.tail)
-        List(f)
-        */
-        MachineOutputParser.postProcessBody(Const.cmd, bs)
-    }
-
-    def clause: Parser[List[Term]] = (head ~ opt(body) <~ eocToken) ^^
-        {
-            case h ~ None => List(h)
-            case h ~ Some(bs) => MachineOutputParser.postProcessBody(h, bs)
+    def utterance:Parser[MMUtterance] =
+        rep("\n") ~> ("args" ~> """[^\n]+\n""".r).? ~>
+        ("aas" ~> """[^\n]+\n""".r).? ~>
+        ("neg_list" ~> """[^\n]+\n""".r).? ~>
+        "utterance(" ~> singleQuote ~ "," ~ doubleQuote ~ "," ~ symbol ~ "," ~ stringList ~ ").\n" ~
+        phrases <~ "'EOU'." <~ rep("\n") ^^ {
+            case id ~ "," ~ text ~ "," ~ positionalInfo ~ "," ~ _ ~ _ ~ mmPhrases => {
+                val Array(start,length) = positionalInfo.split("/",2)
+                val Array(pmid,sec,num) = id.split("""\.""",3)
+                MMUtterance(pmid,sec,num.toInt,text,start.toInt,length.toInt,mmPhrases)
+            }
         }
 
-    def head: Parser[Term] = term
-    def body: Parser[List[Term]] = topToken ~> conj |
-        ((dcgTopToken ~> conj) ^^ { xs => MachineOutputParser.DCG_MARKER :: xs })
+    def phrases:Parser[List[MMPhrase]] = rep(phrase)
 
-    def mkTerm(t: Term ~ Option[String ~ Term]): Term = t match {
-        case x ~ None => x
-        case x ~ Some(op ~ y) => {
-            val t = new Fun(op)
-            val xy = Array[Term](x, y)
-            MachineOutputParser.toFunBuiltin(new Fun(op, xy))
-        }
-    }
-
-    def conj: Parser[List[Term]] = repsep(term, conjTok)
-
-    def term: Parser[Term] = isTerm
-
-    def clauseTerm: Parser[Term] =
-        disjTerm ~ opt(clauseTok ~ disjTerm) ^^ mkTerm
-
-    def disjTerm: Parser[Term] =
-        repsep(implTerm, disjTok) ^^ (Disj.fromList)
-
-    def implTerm: Parser[Term] =
-        conjTerm ~ opt(implTok ~ conjTerm) ^^ mkTerm
-
-    def conjTerm: Parser[Term] =
-        repsep(isTerm, conjTok) ^^ (Conj.fromList)
-
-    def isTerm: Parser[Term] =
-        plusTerm ~ opt(isTok ~ plusTerm) ^^ mkTerm
-
-    def plusTerm: Parser[Term] =
-        timesTerm ~ opt(plusTok ~ timesTerm) ^^ mkTerm
-
-    def timesTerm: Parser[Term] =
-        parTerm ~ opt(timesTok ~ parTerm) ^^ mkTerm
-
-    def parTerm: Parser[Term] = "(" ~> clauseTerm <~ ")" | dcg_escape | plainTerm
-
-    def dcg_escape: Parser[Term] = "{" ~> disjTerm <~ "}" ^^
-        { x =>
-            val f = new Fun("{}")
-            val xs:Array[Term] = Array(x)
-            f.args = xs
-            f
+    def phrase:Parser[MMPhrase] =
+        "phrase(" ~> symbolOrQuote ~> "," ~> """.*\],""".r ~> symbol ~ """,[^\n]+\n""".r ~ candidates ~ mappings ^^ {
+            case positionalInfo ~ _ ~ cands ~ maps => {
+                val Array(start,length) = positionalInfo.split("/",2)
+                MMPhrase(start.toInt,length.toInt,cands,maps)
+            }
         }
 
-    def plainTerm: Parser[Term] = listTerm | funTerm | stringTerm // this order is important for "[]"
+    def candidates:Parser[List[MMCandidate]] =
+        "candidates(" ~> number ~> "," ~> number ~> "," ~> number ~> "," ~> number ~> "," ~>
+        "[" ~> repsep(candidate,",") <~ "])."
 
-    def funTerm: Parser[Term] =
-        varToken ^^ mkVar |||
-            (idToken ~ opt(args)) ^^
-                {
-                    case x ~ None => {
-                        val b = MachineOutputParser.string2ConstBuiltin(x)
-                        if (!b.eq(null)) b
-                        else new Const(x)
-                    }
-                    case x ~ Some(xs) => {
-                        if(x.endsWith(" ")) {
-                            val res: String = x + "(" + xs.map(_.toString).mkString(",") + ")"
-                            val b = MachineOutputParser.string2ConstBuiltin(res)
-                            if (!b.eq(null)) b
-                            else new Const(res)
-                        }
-                        else {
-                            val l = xs.length
-                            val array = new Array[Term](l)
-                            xs.copyToArray(array)
-                            if (l == 2 && x == ".")
-                                new Cons(xs(0), xs(1))
-                            else
-                                MachineOutputParser.toFunBuiltin(new Fun(x, array))
-                        }
-                    }
-                }  |||
-            realToken ^^
-                { x => new Real(x) } |||
-            numToken ^^
-                { x => new SmallInt(x) }
+    //ev(-856,'C0183413','SPECULA, OPHTHALMIC','SPECULA, OPHTHALMIC',[ophthalmic,specula],[medd],[[[2,2],[1,1],2],[[3,3],[2,2],1]],yes,no,['SPN'],[168/12],0)
+    def candidate:Parser[MMCandidate] =
+        "ev(" ~> number ~ ","  ~ singleQuote ~ "," ~ symbolOrQuote ~ "," ~ symbolOrQuote ~ "," ~ stringList ~ "," ~
+        stringList ~ "," ~ list(list(list(number) | number)) ~ "," ~ """(yes|no),(yes|no)""".r ~ "," ~
+        list(singleQuote) ~ "," ~ stringList <~ "," <~ number <~ ")" ^^ {
+            case score ~ "," ~ cui ~ "," ~ umlsName ~ "," ~ preferredName ~ "," ~ _ ~ "," ~
+                 semtypes ~ "," ~ _ ~ "," ~ _ ~ "," ~
+                 sources ~ "," ~ positions => {
+                val rPositions = positions.map(positionalInfo => {
+                    val Array(start,length) = positionalInfo.split("/",2)
+                    (start.toInt,length.toInt)
+                })
 
-    def stringTerm: Parser[Term] = "\"" ~> stringToken <~ "\"" ^^ { x =>
-    //println("here=" + x)
-        Cons.fromList(x.toList.map { i => SmallInt(i) })
-    }
-
-    def listTerm: Parser[Term] =
-        listArgs ^^
-            {
-                case (xs ~ None) =>
-                    MachineOutputParser.list2cons(xs.asInstanceOf[List[Term]], Const.nil)
-                case (xs ~ Some(x)) =>
-                    MachineOutputParser.list2cons(
-                        xs.asInstanceOf[List[Term]],
-                        x.asInstanceOf[Term])
+                MMCandidate(score.toInt,cui,semtypes,rPositions)
             }
 
-    def listArgs: Parser[List[Term] ~ Option[Term]] =
-        "[" ~> (repsep(term, ",") ~ opt("|" ~> term)) <~ "]"
+        }
 
-    def args: Parser[List[Term]] = "(" ~> repsep(term,",") <~ ")"
+    def mappings:Parser[List[MMMapping]] =  "mappings([" ~> repsep(mapping,",") <~ "])."
 
+    //map(-871,[ev(-660,'C0184511','Improved','Improved',[improved],[qlco],[[[1,1],[1,1],0]],no,no,['MTH','SNOMEDCT','CHV'],[159/8],0),ev(-856,'C0183413','SPECULA, OPHTHALMIC','SPECULA, OPHTHALMIC',[ophthalmic,specula],[medd],[[[2,2],[1,1],2],[[3,3],[2,2],1]],yes,no,['SPN'],[168/12],0)])
+    def mapping:Parser[MMMapping] =
+        "map(" ~> number ~ "," ~ list(candidate) <~ ")" ^^ {
+            case score ~_~ candidates => {
+                MMMapping(score.toInt,candidates.map(_.cui))
+            }
+        }
 
     def parse(s: String) = {
-        val text = if (s.trim.endsWith(".")) s else s + ". "
-        val termList = parseAll(clause, text) match {
+        val utt = parseAll(utterance, s) match {
             case Success(xss, _) => xss
             case other => {
                 IO.warnmes("syntax error: " + other)
-                Nil
+                null
             }
         }
-        termList
+
+        utt
     }
 
-    def parseProg(text: String): List[List[Term]] = {
-        val clauseList = parseAll(prog, text) match {
-            case Success(xss, _) => xss
-            case other => {
-                IO.warnmes("syntax error: " + other)
-                Nil
-            }
-        }
-        clauseList
-    }
-
-    def file2clauses(fname: String): List[List[Term]] = {
-        if ("stdio" == fname) {
-            List(parse("true :- " + IO.readLine("> ")))
-        } else parseProg(scala.io.Source.fromFile(fname, "utf-8").mkString)
-    }
-
-    def readGoal() = {
-        val s = IO.readLine("?- ")
-        if (s.eq(null)) null
-        else {
-            vars.clear()
-            val t = parse("true :- " + s)
-            (t, vars)
-        }
-    }
-}
-
-object MachineOutputParser {
-
-    type VMAP = LinkedHashMap[Var, String]
-
-    val builtinMap = new HashMap[String, Const]()
-    builtinMap.put("true", true_())
-    builtinMap.put("fail", fail_())
-    builtinMap.put("=", new eq())
-
-    private def fun2special(t: Fun): Fun = {
-        if (2 == t.args.length) t.name match {
-            case "," => new Conj(t.getArg(0), t.getArg(1))
-            case "." => new Cons(t.getArg(0), t.getArg(1))
-            case ":-" => new Clause(t.getArg(0), t.getArg(1))
-            case ";" => new Disj(t.getArg(0), t.getArg(1))
-
-            case _: String => t
-        }
-        else if (1 == t.args.length) t.name match {
-            case "return" => new Answer(t.getArg(0))
-            case _: String => t
-        }
-        else
-            t
-    }
-
-    private def string2builtin(s: String): Const = {
-
-        val res = builtinMap.get(s) match {
-            case None => {
-
-                try {
-                    val bclass = Class.forName("prolog.builtins." + s)
-
-                    try {
-
-                        val b = bclass.newInstance
-
-                        if (b.isInstanceOf[FunBuiltin] || b.isInstanceOf[ConstBuiltin]) {
-                            val c = b.asInstanceOf[Const]
-                            builtinMap.put(s, c)
-                            c
-                        } else {
-                            println("unexpected prolog.builtins class =>" + s)
-                            null
-                        }
-                    } catch {
-                        case e => {
-                            println("unexpected builtin creation failure =>" + s + "=>" + e)
-                            null
-                        }
-                    }
-                } catch {
-                    case _ => {
-                        //println("expected builtin creation failure =>" + s)
-                        null
-                    }
-                }
-            }
-            case Some(b) => b
-        }
-        res
-    }
-
-    def toConstBuiltin(c: Const): Const = {
-        val t = string2ConstBuiltin(c.name)
-        if (t.eq(null)) c else t
-    }
-
-    def string2ConstBuiltin(s: String): ConstBuiltin =
-        string2builtin(s: String) match {
-            case null => null
-            case b: ConstBuiltin => b
-            case _ => null
-        }
-
-    def string2FunBuiltin(s: String): FunBuiltin =
-        string2builtin(s: String) match {
-            case null => null
-            case b: FunBuiltin => b
-            case _ => null
-        }
-
-    def toFunBuiltin(f: Fun): Fun = {
-        val proto: FunBuiltin = string2FunBuiltin(f.sym)
-
-        val res =
-            if (proto.eq(null)) fun2special(f)
-            else if (f.args.length != proto.arity) f
-            else {
-                val b = proto.funClone
-                b.args = f.args
-                b
-            }
-        res
-    }
-
-    def toQuoted(s: String) = {
-        val c =
-            if (s.eq(null) || s.length == 0) ' '
-            else s.charAt(0)
-        if (c >= 'a' && c <= 'z') s
-        else "'" + s + "'"
-    }
-    def printclause(rvars: VMAP, xs: List[Term]) =
-        IO.println(clause2string(rvars, xs))
-
-    def term2string(t: Term): String =
-        term2string(new VMAP(), List(t), "")
-
-    def clause2string(rvars: VMAP,
-                      xs: List[Term]): String =
-        term2string(rvars, xs, ".")
-
-    def term2string(rvars: VMAP,
-                    xs: List[Term], end: String): String = {
-        val buf = new StringBuilder()
-
-        def pprint(t: Term): Unit = {
-
-            t.ref match {
-                case v: Var => {
-                    val s_opt = rvars.get(v)
-                    s_opt match {
-                        case None => buf ++= v.toString
-                        case Some(s) => buf ++= s
-                    }
-                }
-                case _: cut => buf ++= "!"
-                case _: neck => buf ++= "true"
-                case q: eq => {
-                    pprint(q.getArg(0))
-                    buf ++= "="
-                    pprint(q.getArg(1))
-                }
-                case l: Cons =>
-                    buf ++= Cons.to_string({ x => term2string(rvars, List(x), "") }, l)
-                case f: Fun => {
-                    val s = toQuoted(f.name)
-                    buf ++= s
-                    buf ++= "("
-                    var first = true
-                    if (f.args.eq(null)) buf ++= "...null..."
-                    else
-                        for (x <- f.args) {
-                            if (first) first = false else buf ++= ","
-                            pprint(x)
-                        }
-                    buf ++= ")"
-                }
-                case c: Const => {
-                    val s = toQuoted(c.name)
-                    buf ++= s
-                }
-                case other: Term => buf ++= other.toString
-            }
-
-        }
-
-        pprint(xs.head)
-        val bs = xs.tail
-        if (!bs.isEmpty) {
-            buf ++= ":-\n  "
-            val ys = if (!bs.isEmpty && bs.head.ref.isInstanceOf[neck]) bs.tail else bs
-            pprint(ys.head)
-            ys.tail.foreach { x => { buf ++= ",\n  "; pprint(x) } }
-        }
-        buf ++= end
-        buf.toString
-    }
-
-    def list2cons(xs: List[Term], z: Term): Term = xs match {
-        case Nil => z
-        case y :: ys => new Cons(y, list2cons(ys, z))
-    }
-
-    /*
-     * transforms the body - cut, for now etc.
-     */
-
-    def postProcessBody(h: Term, xs: List[Term]): List[Term] = {
-        var hasCut = false
-        val V = new Var()
-
-        def fixSpecial(t: Term): Term = t match {
-            case f: Fun => {
-                val g = f.funClone
-                val newargs: Array[Term] = f.args.map(fixSpecial)
-                g.args = newargs
-                g
-            }
-            case x: Const =>
-                x.sym match {
-                    case "!" => {
-                        hasCut = true
-                        cut(V)
-                    }
-                    case other => x
-                }
-            case other => other
-        }
-
-        val ys = xs.map(fixSpecial)
-        val (e, es) = ys match {
-            case DCG_MARKER :: bs =>
-                dcgExpand(h, bs)
-            case _ => (h, ys)
-        }
-        if (hasCut) e :: neck(V) :: es else e :: es
-    }
-
-    val DCG_MARKER = new Const("$dcg_body")
-
-    //def dcgExpand(a: Term, b: List[Term]) = (a, b)
-
-    def dcgExpand(a: Term, bs: List[Term]): (Term, List[Term]) = {
-        val V1 = new Var()
-        val V2 = new Var()
-        val hd = dcg_goal(a, V1, V2)
-        val cs = dcg_body(bs, V1, V2)
-        (hd, cs)
-    }
-
-    def dcg_goal(g0: Term, S1: Var, S2: Var): Term = g0 match {
-        case c: Cons => { // assuming just [f] not [f,..]
-        val f = new Cons(c.getHead, S2)
-            val e = new eq()
-            val args = new Array[Term](2)
-            args(0) = S1
-            args(1) = f
-            e.args = args
-            e
-        }
-        //case b: cut => b
-        //case n: neck => n
-        case b: ConstBuiltin => {
-            S1.set_to(S2)
-            b
-        }
-        case f: FunBuiltin => {
-            S1.set_to(S2)
-            f
-        }
-        case g: Const => {
-            if (g.sym == "{}" && g.isInstanceOf[Fun]) {
-                val x = g.asInstanceOf[Fun].args(0) // validate
-                S1.set_to(S2)
-                x
-            } else {
-                val f = new Fun("vs")
-                val args = new Array[Term](2)
-                args(0) = S1
-                args(1) = S2
-                f.args = args
-                termcat.action(g, f)
-            }
-        }
-    }
-
-    def dcg_body(bs: List[Term], S1: Var, S2: Var) = {
-        //println("here=" + bs)
-        val r = dcg_conj(bs, S1, S2)
-        //println("there=" + r)
-        r
-    }
-
-    def dcg_conj(ts: List[Term], S1: Var, S2: Var): List[Term] = {
-        ts match {
-            case Nil => {
-                S1.set_to(S2)
-                Nil
-            }
-            case Const.nil :: Nil => {
-                S1.set_to(S2)
-                Nil
-            }
-            case x :: xs => {
-                val V = new Var()
-                val y = dcg_goal(x, S1, V)
-                val ys = dcg_conj(xs, V, S2)
-                y :: ys
-            }
-
-        }
-    }
-
-    def string2goal(s: String, parser: MachineOutputParser): List[Term] =
-        parser.parse("true :- " + s + ". ")
-
-    def string2goal(s: String): List[Term] = string2goal(s, new MachineOutputParser())
 
     def main(args:Array[String]) {
-        val p = new MachineOutputParser()
-        val u = p.parse("ev(-827,C2825164,Site,Study Site,[site],[spco],[[[3,3],[1,1],0]],[3],3,yes,no,[MTH,NCI],[/(1196,4)],0).")
-        u
+        val input = """args('MetaMap11v2.BINARY.Linux -L 2011 -Z 2011AB -qE -Q 4 -E /tmp/text_000N_345 /tmp/text_000N.out_345',[lexicon_year-'2011',mm_data_year-'2011AB',machine_output-[],composite_phrases-4,indicate_citation_end-[],infile-'/tmp/text_000N_345',outfile-'/tmp/text_000N.out_345']).
+                      |aas([]).
+                      |neg_list([]).
+                      |utterance('16691646.ti.1',"Statement of ""Cases of Gonorrhoeal and Purulent"", Ophthalmia treated in the       Desmarres (U. S. Army) Eye and Ear Hospital, Chicago, Illinois, with       Special Report of Treatment Employed.",156/191,[228,303]).
+                      |phrase('Statement of Cases of Gonorrhoeal',[head([lexmatch([statement]),inputmatch(['Statement']),tag(noun),tokens([statement])]),prep([lexmatch([of]),inputmatch([of]),tag(prep),tokens([of])]),mod([lexmatch([cases]),inputmatch(['Cases']),tag(noun),tokens([cases])]),prep([lexmatch([of]),inputmatch([of]),tag(prep),tokens([of])]),mod([lexmatch([gonorrhoeal]),inputmatch(['Gonorrhoeal']),tag(noun),tokens([gonorrhoeal])])],156/33,[]).
+                      |candidates(6,2,0,4,[ev(-760,'C1710187','Statement','Statement',[statement],[idcn],[[[1,1],[1,1],0]],yes,no,['NCI'],[156/9],0),ev(-593,'C0868928','Cases','Case (situation)',[cases],[ftcn],[[[3,3],[1,1],0]],no,no,['MTH','SNOMEDCT','CHV','LCH'],[169/5],0),ev(-593,'C1533148','Cases','Case unit dose',[cases],[qnco],[[[3,3],[1,1],0]],no,no,['MTH','SNOMEDCT','NCI'],[169/5],0),ev(-560,'C1706255','CASE','Packaging Case',[case],[medd],[[[3,3],[1,1],1]],no,no,['MTH','NCI'],[169/5],1),ev(-560,'C1706256','Case','Clinical Study Case',[case],[cnce],[[[3,3],[1,1],1]],no,no,['MTH','NCI'],[169/5],1),ev(-521,'C0018081','Gonorrhea','Gonorrhea',[gonorrhea],[dsyn],[[[5,5],[1,1],3]],no,no,['LCH','MEDLINEPLUS','MSH','MTH','NCI','NDFRT','SNM','SNOMEDCT','COSTAR','DXP','SNMI','AOD','CHV','CSP','MTHICD9','ICD10CM','ICD9CM'],[178/11],0)]).
+                      |mappings([map(-663,[ev(-760,'C1710187','Statement','Statement',[statement],[idcn],[[[1,1],[1,1],0]],yes,no,['NCI'],[156/9],0),ev(-593,'C0868928','Cases','Case (situation)',[cases],[ftcn],[[[3,3],[1,1],0]],no,no,['MTH','SNOMEDCT','CHV','LCH'],[169/5],0),ev(-521,'C0018081','Gonorrhea','Gonorrhea',[gonorrhea],[dsyn],[[[5,5],[1,1],3]],no,no,['LCH','MEDLINEPLUS','MSH','MTH','NCI','NDFRT','SNM','SNOMEDCT','COSTAR','DXP','SNMI','AOD','CHV','CSP','MTHICD9','ICD10CM','ICD9CM'],[178/11],0)]),map(-663,[ev(-760,'C1710187','Statement','Statement',[statement],[idcn],[[[1,1],[1,1],0]],yes,no,['NCI'],[156/9],0),ev(-593,'C1533148','Cases','Case unit dose',[cases],[qnco],[[[3,3],[1,1],0]],no,no,['MTH','SNOMEDCT','NCI'],[169/5],0),ev(-521,'C0018081','Gonorrhea','Gonorrhea',[gonorrhea],[dsyn],[[[5,5],[1,1],3]],no,no,['LCH','MEDLINEPLUS','MSH','MTH','NCI','NDFRT','SNM','SNOMEDCT','COSTAR','DXP','SNMI','AOD','CHV','CSP','MTHICD9','ICD10CM','ICD9CM'],[178/11],0)])]).
+                      |phrase(and,[conj([lexmatch([and]),inputmatch([and]),tag(conj),tokens([and])])],190/3,[]).
+                      |candidates(0,0,0,0,[]).
+                      |mappings([]).
+                      |phrase('Purulent Ophthalmia',[mod([lexmatch([purulent]),inputmatch(['Purulent']),tag(adj),tokens([purulent])]),head([lexmatch([ophthalmia]),inputmatch(['Ophthalmia']),tag(noun),tokens([ophthalmia])])],194/19,[]).
+                      |candidates(6,4,0,2,[ev(-861,'C0014236','Ophthalmia','Endophthalmitis',[ophthalmia],[dsyn],[[[2,2],[1,1],0]],yes,no,['MSH','MTH','NCI','NDFRT','SNM','SNOMEDCT','CHV','CSP','SNMI','CST'],[203/10],0),ev(-768,'C0015392','Eye','Eye',[eye],[bpoc],[[[2,2],[1,1],5]],yes,no,['COSTAR','FMA','HL7V2.5','LCH','LNC','MSH','MTH','NCI','SNM','SNOMEDCT','UWDA','AOD','CHV','CSP','ICPC','OMIM','SNMI','ICF-CY','ICF'],[203/10],1),ev(-768,'C1280202','Eye','Entire eye',[eye],[bpoc],[[[2,2],[1,1],5]],yes,no,['MTH','SNOMEDCT'],[203/10],1),ev(-755,'C0042789','Ocular','Vision',[ocular],[orgf],[[[2,2],[1,1],7]],yes,no,['LCH','LNC','MSH','MTH','NCI','SNM','SNOMEDCT','SNMI','AOD','CHV','CSP','GO','ICF-CY','ICF'],[203/10],1),ev(-755,'C1299003','Ocular','Ocular (qualifier)',[ocular],[spco],[[[2,2],[1,1],7]],yes,no,['MTH','NCI','SNMI','SNOMEDCT'],[203/10],1),ev(-694,'C0439665','Purulent','Purulent',[purulent],[qlco],[[[1,1],[1,1],0]],no,no,['SNOMEDCT','CHV'],[194/8],0)]).
+                      |mappings([map(-888,[ev(-694,'C0439665','Purulent','Purulent',[purulent],[qlco],[[[1,1],[1,1],0]],no,no,['SNOMEDCT','CHV'],[194/8],0),ev(-861,'C0014236','Ophthalmia','Endophthalmitis',[ophthalmia],[dsyn],[[[2,2],[1,1],0]],yes,no,['MSH','MTH','NCI','NDFRT','SNM','SNOMEDCT','CHV','CSP','SNMI','CST'],[203/10],0)])]).
+                      |phrase('treated in the       Desmarres',[verb([lexmatch([treated]),inputmatch([treated]),tag(verb),tokens([treated])]),prep([lexmatch([in]),inputmatch([in]),tag(prep),tokens([in])]),det([lexmatch([the]),inputmatch([the]),tag(det),tokens([the])]),mod([inputmatch(['Desmarres']),tag(noun),tokens([desmarres])])],214/30,[228]).
+                      |candidates(3,1,0,2,[ev(-770,'C0332293',treated,'Treated with',[treated],[topp],[[[1,1],[1,1],0]],yes,no,['MTH','SNMI','SNOMEDCT','CHV'],[214/7],0),ev(-770,'C1522326','Treated','Treating',[treated],[ftcn],[[[1,1],[1,1],0]],yes,no,['MTH','NCI'],[214/7],0),ev(-737,'C1292734','TREAT','Treatment intent',[treat],[ftcn],[[[1,1],[1,1],1]],yes,no,['MTH','SNOMEDCT','NCI','CHV'],[214/7],1)]).
+                      |mappings([map(-770,[ev(-770,'C0332293',treated,'Treated with',[treated],[topp],[[[1,1],[1,1],0]],yes,no,['MTH','SNMI','SNOMEDCT','CHV'],[214/7],0)]),map(-770,[ev(-770,'C1522326','Treated','Treating',[treated],[ftcn],[[[1,1],[1,1],0]],yes,no,['MTH','NCI'],[214/7],0)])]).
+                      |phrase('(U. S. Army',[punc([inputmatch(['(']),tokens([])]),mod([lexmatch(['U']),inputmatch(['U']),tag(noun),tokens([u])]),punc([inputmatch(['.']),tokens([])]),mod([lexmatch([s]),inputmatch(['S']),tag(noun),tokens([s])]),punc([inputmatch(['.']),tokens([])]),head([lexmatch([army]),inputmatch(['Army']),tag(noun),tokens([army])])],245/11,[]).
+                      |candidates(3,0,0,3,[ev(-827,'C0680778',army,army,[army],[orgt],[[[3,3],[1,1],0]],yes,no,['AOD','CHV','LCH'],[252/4],0),ev(-734,'C0041703','U S','United States',[u,s],[geoa],[[[1,1],[1,1],0],[[2,2],[2,2],0]],no,no,['AOD','CHV','CSP','HL7V3.0','LCH','MSH','MTH','NCI','SNOMEDCT'],[246/1,249/1],0),ev(-660,'C1553035','[u]','Unit Of Measure Prefix - micro',[u],[qnco],[[[1,1],[1,1],0]],no,no,['MTH','NCI','HL7V3.0'],[246/1],0)]).
+                      |mappings([map(-901,[ev(-734,'C0041703','U S','United States',[u,s],[geoa],[[[1,1],[1,1],0],[[2,2],[2,2],0]],no,no,['AOD','CHV','CSP','HL7V3.0','LCH','MSH','MTH','NCI','SNOMEDCT'],[246/1,249/1],0),ev(-827,'C0680778',army,army,[army],[orgt],[[[3,3],[1,1],0]],yes,no,['AOD','CHV','LCH'],[252/4],0)])]).
+                      |phrase(')',[punc([inputmatch([')']),tokens([])])],256/1,[]).
+                      |candidates(0,0,0,0,[]).
+                      |mappings([]).
+                      |phrase('Eye',[head([lexmatch([eye]),inputmatch(['Eye']),tag(noun),tokens([eye])])],258/3,[]).
+                      |candidates(6,4,0,2,[ev(-1000,'C0015392','Eye','Eye',[eye],[bpoc],[[[1,1],[1,1],0]],yes,no,['COSTAR','FMA','HL7V2.5','LCH','LNC','MSH','MTH','NCI','SNM','SNOMEDCT','UWDA','AOD','CHV','CSP','ICPC','OMIM','SNMI','ICF-CY','ICF'],[258/3],0),ev(-1000,'C1280202','Eye','Entire eye',[eye],[bpoc],[[[1,1],[1,1],0]],yes,no,['MTH','SNOMEDCT'],[258/3],0),ev(-944,'C0042789','Ocular','Vision',[ocular],[orgf],[[[1,1],[1,1],2]],yes,no,['LCH','LNC','MSH','MTH','NCI','SNM','SNOMEDCT','SNMI','AOD','CHV','CSP','GO','ICF-CY','ICF'],[258/3],1),ev(-944,'C1299003','Ocular','Ocular (qualifier)',[ocular],[spco],[[[1,1],[1,1],2]],yes,no,['MTH','NCI','SNMI','SNOMEDCT'],[258/3],1),ev(-907,'C0014236','Ophthalmia','Endophthalmitis',[ophthalmia],[dsyn],[[[1,1],[1,1],5]],yes,no,['MSH','MTH','NCI','NDFRT','SNM','SNOMEDCT','CHV','CSP','SNMI','CST'],[258/3],1),ev(-907,'C0700042','Oculus','Orbital region',[oculus],[blor],[[[1,1],[1,1],5]],yes,no,['FMA','MTH','SNMI','SNM','SNOMEDCT','UWDA'],[258/3],1)]).
+                      |mappings([map(-1000,[ev(-1000,'C0015392','Eye','Eye',[eye],[bpoc],[[[1,1],[1,1],0]],yes,no,['COSTAR','FMA','HL7V2.5','LCH','LNC','MSH','MTH','NCI','SNM','SNOMEDCT','UWDA','AOD','CHV','CSP','ICPC','OMIM','SNMI','ICF-CY','ICF'],[258/3],0)]),map(-1000,[ev(-1000,'C1280202','Eye','Entire eye',[eye],[bpoc],[[[1,1],[1,1],0]],yes,no,['MTH','SNOMEDCT'],[258/3],0)])]).
+                      |phrase(and,[conj([lexmatch([and]),inputmatch([and]),tag(conj),tokens([and])])],262/3,[]).
+                      |candidates(0,0,0,0,[]).
+                      |mappings([]).
+                      |phrase('Ear Hospital,',[mod([lexmatch([ear]),inputmatch(['Ear']),tag(noun),tokens([ear])]),head([lexmatch([hospital]),inputmatch(['Hospital']),tag(noun),tokens([hospital])]),punc([inputmatch([',']),tokens([])])],266/13,[]).
+                      |candidates(10,6,0,4,[ev(-861,'C0019994','Hospital, NOS','Hospitals',[hospital],[hcro,mnob],[[[2,2],[1,1],0]],yes,no,['LCH','MEDLINEPLUS','MSH','MTH','CHV','LNC','NCI','SNOMEDCT','AOD','CSP','SNMI'],[270/8],0),ev(-861,'C1510665','Hospital','Hospital environment',[hospital],[qlco],[[[2,2],[1,1],0]],yes,no,['MTH','SNOMEDCT'],[270/8],0),ev(-827,'C1609061','Hospitals','Hospitals - NUCCProviderCodes',[hospitals],[inpr],[[[2,2],[1,1],1]],yes,no,['MTH','HL7V3.0'],[270/8],1),ev(-694,'C0013443','Ear','Ear structure',[ear],[bpoc],[[[1,1],[1,1],0]],no,no,['MTH','SNOMEDCT','CHV','FMA','HL7V2.5','LCH','LNC','MSH','NCI','SNM','UWDA','AOD','CSP','ICPC','OMIM','SNMI'],[266/3],0),ev(-694,'C0521421','Ear','Entire ear',[ear],[bpoc],[[[1,1],[1,1],0]],no,no,['MTH','SNOMEDCT','SNMI'],[266/3],0),ev(-661,'C1414437','EARS','EPRS gene',[ears],[gngm],[[[1,1],[1,1],1]],no,no,['HUGO','MTH','OMIM'],[266/3],1),ev(-638,'C0521422','Otic','Otic',[otic],[spco],[[[1,1],[1,1],2]],no,no,['MTH','SNMI','CHV'],[266/3],1),ev(-638,'C1272926','Otic','Otic dosage form',[otic],[bodm],[[[1,1],[1,1],2]],no,no,['MTH','SNOMEDCT','NCI'],[266/3],1),ev(-638,'C1418197','OTOR','OTOR gene',[otor],[gngm],[[[1,1],[1,1],2]],no,no,['HUGO','MTH','OMIM'],[266/3],1),ev(-638,'C1522191','Otic','Auricular Route of Drug Administration',[otic],[ftcn],[[[1,1],[1,1],2]],no,no,['MTH','HL7V2.5','NCI','SNOMEDCT','SNMI','CHV'],[266/3],1)]).
+                      |mappings([map(-888,[ev(-694,'C0013443','Ear','Ear structure',[ear],[bpoc],[[[1,1],[1,1],0]],no,no,['MTH','SNOMEDCT','CHV','FMA','HL7V2.5','LCH','LNC','MSH','NCI','SNM','UWDA','AOD','CSP','ICPC','OMIM','SNMI'],[266/3],0),ev(-861,'C0019994','Hospital, NOS','Hospitals',[hospital],[hcro,mnob],[[[2,2],[1,1],0]],yes,no,['LCH','MEDLINEPLUS','MSH','MTH','CHV','LNC','NCI','SNOMEDCT','AOD','CSP','SNMI'],[270/8],0)]),map(-888,[ev(-694,'C0013443','Ear','Ear structure',[ear],[bpoc],[[[1,1],[1,1],0]],no,no,['MTH','SNOMEDCT','CHV','FMA','HL7V2.5','LCH','LNC','MSH','NCI','SNM','UWDA','AOD','CSP','ICPC','OMIM','SNMI'],[266/3],0),ev(-861,'C1510665','Hospital','Hospital environment',[hospital],[qlco],[[[2,2],[1,1],0]],yes,no,['MTH','SNOMEDCT'],[270/8],0)]),map(-888,[ev(-694,'C0521421','Ear','Entire ear',[ear],[bpoc],[[[1,1],[1,1],0]],no,no,['MTH','SNOMEDCT','SNMI'],[266/3],0),ev(-861,'C0019994','Hospital, NOS','Hospitals',[hospital],[hcro,mnob],[[[2,2],[1,1],0]],yes,no,['LCH','MEDLINEPLUS','MSH','MTH','CHV','LNC','NCI','SNOMEDCT','AOD','CSP','SNMI'],[270/8],0)]),map(-888,[ev(-694,'C0521421','Ear','Entire ear',[ear],[bpoc],[[[1,1],[1,1],0]],no,no,['MTH','SNOMEDCT','SNMI'],[266/3],0),ev(-861,'C1510665','Hospital','Hospital environment',[hospital],[qlco],[[[2,2],[1,1],0]],yes,no,['MTH','SNOMEDCT'],[270/8],0)])]).
+                      |phrase('Chicago,',[head([lexmatch(['Chicago']),inputmatch(['Chicago']),tag(noun),tokens([chicago])]),punc([inputmatch([',']),tokens([])])],280/8,[]).
+                      |candidates(1,0,0,1,[ev(-1000,'C0008044','Chicago','Chicago',[chicago],[geoa],[[[1,1],[1,1],0]],yes,no,['MSH','CHV'],[280/7],0)]).
+                      |mappings([map(-1000,[ev(-1000,'C0008044','Chicago','Chicago',[chicago],[geoa],[[[1,1],[1,1],0]],yes,no,['MSH','CHV'],[280/7],0)])]).
+                      |phrase('Illinois,',[head([lexmatch(['Illinois']),inputmatch(['Illinois']),tag(noun),tokens([illinois])]),punc([inputmatch([',']),tokens([])])],289/9,[]).
+                      |candidates(1,0,0,1,[ev(-1000,'C0020898','Illinois','Illinois (geographic location)',[illinois],[geoa],[[[1,1],[1,1],0]],yes,no,['MTH','SNOMEDCT','AOD','LCH','MSH','NCI','CHV'],[289/8],0)]).
+                      |mappings([map(-1000,[ev(-1000,'C0020898','Illinois','Illinois (geographic location)',[illinois],[geoa],[[[1,1],[1,1],0]],yes,no,['MTH','SNOMEDCT','AOD','LCH','MSH','NCI','CHV'],[289/8],0)])]).
+                      |phrase('with       Special Report',[prep([lexmatch([with]),inputmatch([with]),tag(prep),tokens([with])]),mod([lexmatch([special]),inputmatch(['Special']),tag(adj),tokens([special])]),head([lexmatch([report]),inputmatch(['Report']),tag(noun),tokens([report])])],299/25,[303]).
+                      |candidates(3,0,0,3,[ev(-861,'C0684224','Report','Report (document)',[report],[inpr],[[[2,2],[1,1],0]],yes,no,['MTH','CHV','MSH','NCI','SNOMEDCT','AOD'],[318/6],0),ev(-861,'C0700287','Report','Reporting',[report],[hlca],[[[2,2],[1,1],0]],yes,no,['MTH','NCI','SNOMEDCT','AOD','CHV','LNC'],[318/6],0),ev(-694,'C0205555','Special','Special (qualifier)',[special],[qlco],[[[1,1],[1,1],0]],no,no,['MTH','NCI','SNMI','SNOMEDCT','CHV'],[310/7],0)]).
+                      |mappings([map(-888,[ev(-694,'C0205555','Special','Special (qualifier)',[special],[qlco],[[[1,1],[1,1],0]],no,no,['MTH','NCI','SNMI','SNOMEDCT','CHV'],[310/7],0),ev(-861,'C0684224','Report','Report (document)',[report],[inpr],[[[2,2],[1,1],0]],yes,no,['MTH','CHV','MSH','NCI','SNOMEDCT','AOD'],[318/6],0)]),map(-888,[ev(-694,'C0205555','Special','Special (qualifier)',[special],[qlco],[[[1,1],[1,1],0]],no,no,['MTH','NCI','SNMI','SNOMEDCT','CHV'],[310/7],0),ev(-861,'C0700287','Report','Reporting',[report],[hlca],[[[2,2],[1,1],0]],yes,no,['MTH','NCI','SNOMEDCT','AOD','CHV','LNC'],[318/6],0)])]).
+                      |phrase('of Treatment',[prep([lexmatch([of]),inputmatch([of]),tag(prep),tokens([of])]),head([lexmatch([treatment]),inputmatch(['Treatment']),tag(noun),tokens([treatment])])],325/12,[]).
+                      |candidates(6,0,0,6,[ev(-1000,'C0039798',treatment,'therapeutic aspects',[treatment],[ftcn],[[[1,1],[1,1],0]],yes,no,['MTH','MSH'],[328/9],0),ev(-1000,'C0087111','Treatment','Therapeutic procedure',[treatment],[topp],[[[1,1],[1,1],0]],yes,no,['MTHMST','MTH','SNOMEDCT','NCI','MTHHH','SNMI','CHV','CSP','AOD','LNC','HL7V2.5','MSH'],[328/9],0),ev(-1000,'C1522326','Treatment','Treating',[treatment],[ftcn],[[[1,1],[1,1],0]],yes,no,['MTH','NCI'],[328/9],0),ev(-1000,'C1533734','Treatment','Administration procedure',[treatment],[topp],[[[1,1],[1,1],0]],yes,no,['MTH','ICD10PCS','SNOMEDCT','NCI'],[328/9],0),ev(-1000,'C1705169','Treatment','Biomaterial Treatment',[treatment],[cnce],[[[1,1],[1,1],0]],yes,no,['MTH','NCI'],[328/9],0),ev(-1000,'C3161471','TREATMENT','Treatment Study',[treatment],[resa],[[[1,1],[1,1],0]],yes,no,['NCI'],[328/9],0)]).
+                      |mappings([map(-1000,[ev(-1000,'C0039798',treatment,'therapeutic aspects',[treatment],[ftcn],[[[1,1],[1,1],0]],yes,no,['MTH','MSH'],[328/9],0)]),map(-1000,[ev(-1000,'C0087111','Treatment','Therapeutic procedure',[treatment],[topp],[[[1,1],[1,1],0]],yes,no,['MTHMST','MTH','SNOMEDCT','NCI','MTHHH','SNMI','CHV','CSP','AOD','LNC','HL7V2.5','MSH'],[328/9],0)]),map(-1000,[ev(-1000,'C1522326','Treatment','Treating',[treatment],[ftcn],[[[1,1],[1,1],0]],yes,no,['MTH','NCI'],[328/9],0)]),map(-1000,[ev(-1000,'C1533734','Treatment','Administration procedure',[treatment],[topp],[[[1,1],[1,1],0]],yes,no,['MTH','ICD10PCS','SNOMEDCT','NCI'],[328/9],0)]),map(-1000,[ev(-1000,'C1705169','Treatment','Biomaterial Treatment',[treatment],[cnce],[[[1,1],[1,1],0]],yes,no,['MTH','NCI'],[328/9],0)]),map(-1000,[ev(-1000,'C3161471','TREATMENT','Treatment Study',[treatment],[resa],[[[1,1],[1,1],0]],yes,no,['NCI'],[328/9],0)])]).
+                      |phrase('Employed.',[verb([lexmatch([employed]),inputmatch(['Employed']),tag(verb),tokens([employed])]),punc([inputmatch(['.']),tokens([])])],338/9,[]).
+                      |candidates(2,1,0,1,[ev(-1000,'C0557351','Employed','Employed',[employed],[fndg],[[[1,1],[1,1],0]],yes,no,['MTH','SNOMEDCT','AOD','CHV'],[338/8],0),ev(-966,'C0457083','Employ','Usage',[employ],[ftcn],[[[1,1],[1,1],1]],yes,no,['MTH','NCI','SNOMEDCT','CHV'],[338/8],1)]).
+                      |mappings([map(-1000,[ev(-1000,'C0557351','Employed','Employed',[employed],[fndg],[[[1,1],[1,1],0]],yes,no,['MTH','SNOMEDCT','AOD','CHV'],[338/8],0)])]).
+                      |'EOU'.
+                      |""".stripMargin
+
+        val cands = parseAll(candidates,
+            "candidates(4,2,0,2,[ev(-1000,'C0005775','Circulation','Blood Circulation',[circulation],[phsf],[[[1,1],[1,1],0]],yes,no,['MSH','MTH','NCI','AOD','CHV','CSP','GO','LCH'],[1133/11],0),ev(-1000,'C1516559','Circulation','Circulatory Process',[circulation],[orgf],[[[1,1],[1,1],0]],yes,no,['MTH','NCI'],[1133/11],0),ev(-928,'C0497231','Circulatory','circulatory system',[circulatory],[ftcn],[[[1,1],[1,1],3]],yes,no,['MTH','LNC','ICPC','CHV'],[1133/11],1),ev(-900,'C1531633','Circulator','Circulating nurse',[circulator],[prog],[[[1,1],[1,1],6]],yes,no,['SNOMEDCT'],[1133/11],1)]).")
+        val utt = parse(input)
+        utt
     }
 }
+
+/*
+case class MMArgs(args:String, options:List[String])
+
+case class MMNegList(negs:List[String]) */
+
+case class MMUtterance(pmid:String,section:String,num:Int,text:String,startPos:Int,length:Int,phrases:List[MMPhrase])
+
+case class MMPhrase(start:Int,length:Int, candidates:List[MMCandidate], mappings:List[MMMapping])
+
+case class MMCandidate(score:Int,cui:String, semtypes:List[String], positions:List[(Int,Int)])
+
+case class MMMapping(score:Int,cuis:List[String])

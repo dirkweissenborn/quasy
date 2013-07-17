@@ -3,8 +3,8 @@ package de.tu.dresden.quasy.answer.score.factoid
 import de.tu.dresden.quasy.answer.model.FactoidAnswer
 import de.tu.dresden.quasy.model.annotation.{OntologyEntityMention, DecisionAnswerType}
 import de.tu.dresden.quasy.model.db.LuceneIndex
-import org.apache.lucene.queryParser.QueryParser
 import org.apache.lucene.util.Version
+import org.apache.lucene.queryparser.classic.QueryParser
 
 /**
  * @author dirk

@@ -37,7 +37,7 @@ object UmlsEnhancerOld extends TextEnhancer {
         var last:String = asciiText
         var texts = List[String]()
         while (last.size > maxLength) {
-            val (first,newLast) = last.splitAt(asciiText.indexOf(" ",maxLength))
+            val (first,newLast) = last.splitAt(last.indexOf(" ",maxLength))
             last = newLast
             texts ::= first
         }

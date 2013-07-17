@@ -1,16 +1,14 @@
 package de.tu.dresden.quasy.answer.score.factoid.tycor
 
 
-import org.apache.lucene.queryParser.QueryParser
 import org.apache.lucene.util.Version
-import de.tu.dresden.quasy.answer.score.factoid.FactoidScorer
 import de.tu.dresden.quasy.answer.model.{AnswerContext, FactoidAnswer}
-import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.enhancer.EnhancementPipeline
 import de.tu.dresden.quasy.io.AnnotatedTextSource
-import de.tu.dresden.quasy.model.annotation.{SimpleAnswerTypeLike, DecisionAnswerType, Section}
+import de.tu.dresden.quasy.model.annotation.{SimpleAnswerTypeLike, Section}
 import java.text.Normalizer
 import de.tu.dresden.quasy.model.db.{AnnotationCache, LuceneIndex}
+import org.apache.lucene.queryparser.classic.QueryParser
 
 /**
  * @author dirk

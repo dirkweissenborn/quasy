@@ -3,7 +3,7 @@ package de.tu.dresden.quasy.enhancer
 import clearnlp.FullClearNlpPipeline
 import java.io.{FileWriter, File}
 import de.tu.dresden.quasy.model.AnnotatedText
-import actors.Future
+import scala.actors.{Futures, Future}
 import de.tu.dresden.quasy.util.Xmlizer
 import de.tu.dresden.quasy.io.AnnotatedTextSource.AnnotatedTextSource
 import collection.mutable._
@@ -46,7 +46,7 @@ class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
         if (writeOut)
             outputDir.mkdirs()
         val assignedTexts = enhancers.foldLeft(Map[TextEnhancer,AnnotatedText]())( (acc,enhancer) => acc + (enhancer -> null))
-        val futures = enhancers.foldLeft(Map[TextEnhancer,Future[AnnotatedText]]())( (acc,enhancer) => acc + (enhancer -> null))
+        val futures = enhancers.foldLeft(Map[TextEnhancer,(AnnotatedText,Future[AnnotatedText])]())( (acc,enhancer) => acc + (enhancer -> null))
 
         var first:AnnotatedText = null
 
@@ -68,7 +68,7 @@ class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
                 assignedTexts.foreach {
                     case (enhancer,text) => {
                         if (text != null) {
-                            futures(enhancer) = (enhancer !! text).asInstanceOf[Future[AnnotatedText]]
+                            futures(enhancer) = (text,(enhancer !! text).asInstanceOf[Future[AnnotatedText]])
                             assignedTexts(enhancer) = null
                         }
                     }
@@ -77,7 +77,14 @@ class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
                 futures.foreach {
                     case (enhancer,future) => {
                         if (future != null) {
-                            val text = future.apply()
+                            val text = Futures.awaitAll(120000,future._2).head.asInstanceOf[Option[AnnotatedText]] match {
+                                case None => {
+                                    LOG.warn("Annotation timed out for annotator: "+enhancer.getClass.getSimpleName)
+                                    future._1
+                                }
+                                case Some(t) => t
+                            }
+
                             futures(enhancer) = null
                             next.get(enhancer) match {
                                 case Some(nextEnhancer) => assignedTexts(nextEnhancer) = text

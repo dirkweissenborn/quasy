@@ -14,7 +14,7 @@ import scala.sys.process._
 object UmlsEnhancer extends TextEnhancer {
     private final val pathToMM = "/home/dirk/workspace/public_mm/bin/metamap12"
 
-    private final val allowedSTypes = "acab,amas,aapp,anab,anst,antb,biof,bacs,blor,bpoc,carb,crbs,cell,celc,celf,comd,chem,chvf,chvs,clnd,cgab,diap,dsyn,drdd,eico,elii,emst,enzy,food,ffas,fngs,gngp,gngm,genf,hops,horm,inpo,inch,lipd,mobd,moft,mosq,neop,nsba,nnon,nusq,ortf,orch,opco,phsu,rcpt,sosy,strd,sbst,virs,vita".split(",")
+    private final val allowedSTypes = "acab,amas,aapp,anab,anst,antb,biof,bacs,blor,bpoc,carb,crbs,cell,celc,celf,comd,chem,chvf,chvs,clnd,cgab,diap,dsyn,drdd,eico,elii,emst,enzy,food,ffas,fngs,gngp,gngm,genf,hops,horm,inpo,hlca,inch,imft,lipd,mobd,moft,mosq,neop,nsba,nnon,nusq,ortf,orch,opco,phsu,rcpt,sosy,strd,sbst,virs,vita".split(",")
     /*
 00000000|MM|68.24|Opioids|C0242402|[hops,orch,phsu]|["Opioid"-tx-3-"opioid","Opioid"-tx-2-"opioid","Opioid"-tx-1-"opioid"]|TX|286:6|185:6|84:6|D27.505.696.663.850.014.520;D27.505.954.427.040.325;D27.505.954.427.210.049
 00000000|MM|20.83|Patients|C0030705|[podg]|["Patients"-tx-3-"patients","Patients"-tx-2-"patients","Patients"-tx-1-"patients"]|TX|256:8|155:8|54:8|M01.643
@@ -33,8 +33,8 @@ object UmlsEnhancer extends TextEnhancer {
         val maxLength = 5000
         var last:String = asciiText
         var texts = List[String]()
-        while (last.size > maxLength) {
-            val (first,newLast) = last.splitAt(asciiText.indexOf(" ",maxLength))
+        while (last.length > maxLength) {
+            val (first,newLast) = last.splitAt(math.max(last.indexOf(". ",maxLength),maxLength))
             last = newLast
             texts ::= first
         }
@@ -43,7 +43,8 @@ object UmlsEnhancer extends TextEnhancer {
         var offset = 0
 
         texts.foreach(asciiText => {
-            offset += asciiText.takeWhile(_.equals(' ')).size
+            val whiteSpaces = asciiText.takeWhile(_.equals(' ')).size
+            offset += whiteSpaces
             val resultStr = requestSemRep(asciiText.trim)
             //var NEs = List[OntologyEntityMention]()
             resultStr.split("""\n""").foreach( line => {
@@ -76,7 +77,7 @@ object UmlsEnhancer extends TextEnhancer {
                     }
                 }
             } )
-            offset += asciiText.length
+            offset += asciiText.length - whiteSpaces
         })
     }
 

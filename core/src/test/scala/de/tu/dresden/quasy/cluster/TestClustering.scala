@@ -1,9 +1,6 @@
 package de.tu.dresden.quasy.cluster
 
 import org.scalatest.FunSuite
-import java.io.File
-import de.tu.dresden.quasy.model.AnnotatedText
-import de.tu.dresden.quasy.model.annotation.{Token, Sentence, Section}
 
 /**
  * @author dirk
