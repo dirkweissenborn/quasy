@@ -3,6 +3,7 @@ package de.tu.dresden.quasy.enhancer
 import de.tu.dresden.quasy.model.AnnotatedText
 import actors.Actor
 import de.tu.dresden.quasy.model.annotation.Annotation
+import org.apache.commons.logging.LogFactory
 
 /**
  * @author dirk

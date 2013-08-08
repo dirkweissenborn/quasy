@@ -19,15 +19,18 @@ case class WeightedContextScorer[T <: Annotation](answerContexts:List[AnswerCont
     private val sum = sentences.map(_._2).sum
 
     def scoreInternal(factoid: FactoidAnswer) = {
-        sentences.map {
-            case (concepts, score) => {
-                concepts
-                if(concepts.exists(_.equals(factoid.answer)))
-                    score
-                else
-                    0.0
-            }
-        }.sum / sum
+        if(sum > 0.0)
+            sentences.map {
+                case (concepts, score) => {
+                    concepts
+                    if(concepts.exists(_.equals(factoid.answer)))
+                        score
+                    else
+                        0.0
+                }
+            }.sum / sum
+        else
+            0.0
     }
 
     override val man = manifest[WeightedContextScorer[T]]

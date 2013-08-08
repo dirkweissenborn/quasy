@@ -2,7 +2,7 @@ package de.tu.dresden.quasy.model.db
 
 import java.io.File
 import org.apache.lucene.store.FSDirectory
-import org.apache.lucene.index.{DirectoryReader}
+import org.apache.lucene.index.{MultiReader, IndexReader, DirectoryReader}
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.analysis.en.EnglishAnalyzer
 import org.apache.lucene.util.Version
@@ -17,20 +17,29 @@ import org.apache.lucene.analysis.Analyzer
  */
 case class LuceneIndex(luceneIndex:File, var analyzer: Analyzer = new EnglishAnalyzer(Version.LUCENE_40)) {
 
-    var index = FSDirectory.open(luceneIndex)
-    var reader = DirectoryReader.open(index)
-    var searcher = new IndexSearcher(reader)
+    var reader:IndexReader = null
+    var searcher:IndexSearcher = null
+
+    open
 
     def close {
-        reader.close()
+        if(reader != null)
+            reader.close()
     }
 
     def open {
-        reader.close()
-
-        index = FSDirectory.open(luceneIndex)
-        reader = DirectoryReader.open(index)
+        close
+        if(luceneIndex.listFiles().exists(_.isDirectory)) {
+            val indexes = luceneIndex.listFiles().filter(_.isDirectory).map(FSDirectory.open)
+            val readers:Array[IndexReader] = indexes.map(DirectoryReader.open)
+            reader = new MultiReader(readers,true)
+        }
+        else {
+            val index = FSDirectory.open(luceneIndex)
+            reader = DirectoryReader.open(index)
+        }
         searcher = new IndexSearcher(reader)
+
     }
 }
 

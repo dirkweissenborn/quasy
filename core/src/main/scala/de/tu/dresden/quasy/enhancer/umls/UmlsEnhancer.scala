@@ -5,6 +5,9 @@ import de.tu.dresden.quasy.model.annotation.{OntologyEntityMention, Token, UmlsC
 import de.tu.dresden.quasy.util.Xmlizer
 import de.tu.dresden.quasy.enhancer.TextEnhancer
 import scala.sys.process._
+import scala.actors.Futures
+import org.apache.commons.logging.LogFactory
+import java.io.{InputStreamReader, BufferedReader}
 
 /**
  * @author dirk
@@ -12,6 +15,8 @@ import scala.sys.process._
  *          Time: 3:00 PM
  */
 object UmlsEnhancer extends TextEnhancer {
+    private val LOG = LogFactory.getLog(getClass)
+
     private final val pathToMM = "/home/dirk/workspace/public_mm/bin/metamap12"
 
     private final val allowedSTypes = "acab,amas,aapp,anab,anst,antb,biof,bacs,blor,bpoc,carb,crbs,cell,celc,celf,comd,chem,chvf,chvs,clnd,cgab,diap,dsyn,drdd,eico,elii,emst,enzy,food,ffas,fngs,gngp,gngm,genf,hops,horm,inpo,hlca,inch,imft,lipd,mobd,moft,mosq,neop,nsba,nnon,nusq,ortf,orch,opco,phsu,rcpt,sosy,strd,sbst,virs,vita".split(",")
@@ -34,7 +39,7 @@ object UmlsEnhancer extends TextEnhancer {
         var last:String = asciiText
         var texts = List[String]()
         while (last.length > maxLength) {
-            val (first,newLast) = last.splitAt(math.max(last.indexOf(". ",maxLength),maxLength))
+            val (first,newLast) = last.splitAt(math.max(last.indexOf(". ",maxLength)+1,maxLength))
             last = newLast
             texts ::= first
         }
@@ -81,11 +86,42 @@ object UmlsEnhancer extends TextEnhancer {
         })
     }
 
-    def requestSemRep(text:String):String =
-        (("echo \""+text+"\"") #| ("sh "+pathToMM+" -AlN")).!!
+    def requestSemRep(text:String):String = {
+        val commands = Array("sh","-c","echo "+"\""+text+"\" | "+pathToMM+" -AlN")
+        var proc:java.lang.Process = null
+
+        val result = Futures.future({
+            proc = Runtime.getRuntime.exec(commands)
+            var res = ""
+
+            val stdInput = new BufferedReader(new
+                    InputStreamReader(proc.getInputStream))
+
+            var s = ""
+            try {
+                while ({s = stdInput.readLine(); s != null}) {
+                    res += s +"\n"
+                }
+            }
+            catch {
+                case e:Exception =>
+            }
+
+            res
+        })
+
+        Futures.awaitAll(120000,result).head.asInstanceOf[Option[String]] match {
+            case None => {
+                LOG.warn("Annotation timed out in UmlsEnhancer")
+                proc.destroy()
+                ""
+            }
+            case Some(t) => t
+        }
+    }
 
     def main(args:Array[String]) {
-        var text = new AnnotatedText("Screening for psychological risk factors is an important first step in safeguarding against nonadherence practices and identifying patients who may be vulnerable to the risks associated with opioid therapy.")
+        var text = new AnnotatedText("Similarly to antiviral vaccines now used to prevent cervical cancer (anti-HPV vaccine) or hepatocellular carcinoma (anti-hepatitis B vaccine) preventive vaccines against usually non-expressed retroviral antigens may stimulate long lasting CD8+ T lymphocytic response in an otherwise vulnerable host that could then become able to eradicate early malignancies expressing these retroviral antigens [58]. Nearly 85% of malignant melanocytes express an antigen called HERV-K-MEL, a product of a pseudo-gene incorporated in the HERV-K env gene [25,80,81]. The HERV-K-MEL antigen, already previously defined as a marker of melanoma risk, is not present in normal tissues, but is significantly expressed in the majority of dysplastic and normal naevi, as well as other tumors like sarcoma, lymphoma, bladder, breast and ovarian cancer [25]. The FEBrile Infections and Melanoma (FEBIM) multicentre case&#x2013;control study provided evidence how the Bacillus of Calmette Guerin (BCG) and vaccinia virus vaccination given in early childhood or acute infectious diseases acquired later in life were associated with a lesser melanoma risk [81]. This evidence was further examined and confirmed in another multi-centre case-control study conducted on 603 incident cases of malignant melanoma and 627 population controls (Table 1) [82]. Table 1 Case-control study (FEBIM-1): Combined effect of infections and vaccinations on the risk of melanoma; Odds ratios (95% confidence interval) for melanoma risk, adjusted for study centre, gender, age, skin phenotype, freckling index, number of naevi and solar burns[82] &#xA0; Number of severe infections &#xA0; 0 &#x2265;1 No vaccine 1.0 0.37 (0.10-1.42) BCG or Vaccinia 0.57 (0.33-0-96) 0.29 (0.15-0.57) BCG and Vaccinia 0.40 (0.23-0.68) 0.33 (0.17-0.65) A protein bearing a high homology sequence of amino acids with the antigen HERV-K-MEL is expressed by BCG and vaccinia virus vaccine (Table 2). The yellow fever virus vaccine (YFV) was also found to express an antigen with a strict homology sequence of amino acids with HERV-K-MEL (Table 2) [38]. Table 2 Comparison between amino acid sequence of HERV-K-MEL and proteins from different viruses[38] &#xA0; HERV-K-Mel M L A V _ I S C A V BCG L * * * DV V P I * * Vaccinia virus S * * * V * A * * &#xA0; Yellow fever virus S * * * _ _ * S * * A = Alanine; L: Leucine; V = Valine; I = Isoleucine; S = Serine; M = Methionine; C = Cisteine; P=Proline; D=Aspartic Acid; G= Glycine; * = Identical amino acids; _ = Missing amino acid. Sera from four Rhesus macaques before and four weeks after being administered with YFV were incubated with melanoma cells from two randomly selected patients: immune reactivity was observed at indirect immune-fluorescence in most apes post vaccination [Hunsmann &amp; Krone 2005. Vaccination against malignant melanoma. European Patent EP1586330A1]. This suggests that YFV might confer a protection against melanoma, by molecular mimicry (Figure 2). Figure 2 Molecular mimicry and immunological response possibly triggered by the yellow fever virus vaccine (YFV), leading to cancer prevention. APC= Antigen presenting cells. To assess this protective effect, a cohort study (28,306 subjects vaccinated with YFV) and a case-control study nested in the cohort (37 melanoma cases vs. 151 tumours not expressing HERV-K-MEL) was recently performed in North-Eastern Italy [83]. The time elapsed since YFV up to end of follow up (TSV) was split into the following year intervals: 0-4; 5-9; 10+. In the case control study contrasting melanoma with tumors non-expressing HERV-K-MEL, the Odds Ratios (OR) for the above mentioned time bands adjusted for age and sex were 1.00, 0.96, (95% CI: 0.43-2.14) and 0.26 (95% CI: 0.07-0.96). The risk of melanoma was therefore reduced if YFV had been received at least 10 years before, as a result of prevention of tumor initiation rather than culling of already compromised melanoma cells [83]. Hodges Vasquez et al. [84] recently conducted a case-control study on 7,010 members of the US military to test the association between YFV and melanoma risk. Total cases of melanoma in this cohort were 638 diagnosed from 1999 to 2009 and each of them was contrasted with 10 healthy controls from active duty military service members. The study concluded that no significant association between YFV 17D and melanoma risk was found. However the maximum TSV was only 11.5 years and controls were presumably selected among healthy subjects. Selecting controls among individuals with malignancies other than melanoma from the same cohort of vaccinees (as done in the above Italian study) might influence the strength of the association, as study subjects would be a better choice. If the interaction between YFV and HERV-K-MEL prevents melanoma, healthy individuals could not be accepted as controls because some of them could be &#x201C;cases of melanoma prevented by YFV&#x201D; rather than simply subjects without disease. Prevention of melanoma could occur frequently because numerous infectious agents produce homologous epitopes capable of generating cross-reactive immunity.")
 
         enhance(text)
 

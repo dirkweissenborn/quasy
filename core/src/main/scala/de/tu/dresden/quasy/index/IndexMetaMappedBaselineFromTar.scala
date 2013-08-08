@@ -17,13 +17,14 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import scala.collection.JavaConversions._
 import scala.Some
 import de.tu.dresden.quasy.util.{MMUtterance, MachineOutputParser}
+import scala.collection.parallel.ParSeq
 
 /**
  * @author dirk
  *          Date: 7/15/13
  *          Time: 1:31 PM
  */
-object IndexMetaMappedBaseline {
+object IndexMetaMappedBaselineFromTar {
 
     private val LOG = LogFactory.getLog(getClass)
 
@@ -55,6 +56,7 @@ object IndexMetaMappedBaseline {
         writingActor.start()
         var entry:TarArchiveEntry = null
         var currentUtterance = ""
+        var currentUtterances = ParSeq[String]()
 
         val reader:DirectoryReader = DirectoryReader.open(fSDirectory)
         val searcher = new IndexSearcher(reader)
@@ -62,6 +64,37 @@ object IndexMetaMappedBaseline {
         var counter = 0
         var skipCounter = 0
         val utteranceRegex = """utterance\('([^']+)',""".r
+        val numPar = 8
+
+        val parsers = Seq.tabulate(numPar)(i => new MachineOutputParser)
+
+        def inIndex(pmid: String, sec: String, num: String): Boolean = {
+            val query = new QueryParser(Version.LUCENE_40, "", analyzer).
+                parse("pmid:" + pmid + " AND section:" + sec + " AND number:" + num)
+            if (searcher.search(query, 1).totalHits == 0) {
+                false
+            } else {
+                skipCounter += 1
+                if (skipCounter % 10000 == 0) {
+                    LOG.info(skipCounter + " utterances skipped!")
+                }
+                true
+            }
+        }
+
+        def writeUtterances = {
+            var parsed = currentUtterances.reverse.zip(parsers).map(e => e._2.parse(e._1)).toList
+            if (parsed.contains(null)) {
+                parsed = parsed.filter(_ ne null).dropWhile(e => inIndex(e.pmid, e.section, e.num.toString))
+                analyze = false
+            }
+            if (parsed.size > 0) {
+                if (future != null)
+                    future.apply()
+                future = writingActor !! Some(parsed)
+            }
+            currentUtterances = ParSeq[String]()
+        }
 
         while({entry = stream.getNextTarEntry;entry != null}) {
             LOG.info("Processing: "+entry.getName)
@@ -81,33 +114,21 @@ object IndexMetaMappedBaseline {
                             val id = utterance.substring(utterance.indexOf('\''),utterance.lastIndexOf('\''))
                             val Array(pmid,sec,num) = id.split("""\.""",3)
 
-                            val query = new QueryParser(Version.LUCENE_40, "", analyzer ).
-                                parse("pmid:"+pmid+" AND section:"+sec+" AND number:"+num)
-                            if(searcher.search(query,1).totalHits == 0) {
-                                analyze = true
-                            } else {
-                                skipCounter += 1
-                                if(skipCounter % 10000 == 0) {
-                                    LOG.info(skipCounter+" utterances skipped!")
-                                }
-                            }
+                            analyze = !inIndex(pmid, sec, num)
                         }
                         if(analyze) {
-                            val mmUtterance = MachineOutputParser.parse(currentUtterance)
-                            if(mmUtterance ne null) {
-                                if (future != null)
-                                    future.apply()
-                                future = writingActor !! Some(mmUtterance)
-                            } else
-                                analyze = false  // This item was not indexed so it might be that the following items are already indexed
+                            currentUtterances = currentUtterances.+:(currentUtterance)
                         }
 
                         counter += 1
                         currentUtterance = ""
 
+                        if(currentUtterances.size >= numPar) {
+                            writeUtterances
+                        }
+
                         if(counter % 10000 == 0) {
                             LOG.info(counter+" utterances processed!")
-                            writingActor !! "commit"
                         }
                     }
                 }
@@ -117,6 +138,7 @@ object IndexMetaMappedBaseline {
                     }
                 }
             })
+            writeUtterances
             INDEX_WRITER.commit()
         }
 
@@ -129,9 +151,11 @@ object IndexMetaMappedBaseline {
         def act() {
             loop {
                 receive {
-                    case Some(utterance:MMUtterance)=> {
-                        val docs = toDocuments(utterance)
-                        INDEX_WRITER.addDocuments(docs)
+                    case Some(utterances:List[MMUtterance])=> {
+                        utterances.foreach(utterance => {
+                            val docs = toDocuments(utterance)
+                            INDEX_WRITER.addDocuments(docs)
+                        })
                         sender ! true //give something back
                     }
                     case None => exit()
@@ -148,12 +172,14 @@ object IndexMetaMappedBaseline {
         doc.add(new StringField("pmid", mmUtterance.pmid , Field.Store.YES))
         doc.add(new StringField("section", mmUtterance.section , Field.Store.YES))
         doc.add(new StringField("number", mmUtterance.num.toString , Field.Store.YES))
-        doc.add(new TextField("text", mmUtterance.text.replaceAll(" ( )+"," ").replaceAll("\"\"+","\"").replaceAll("''+","'").trim , Field.Store.YES))
-        doc.add(new IntField("start", mmUtterance.startPos , Field.Store.YES))
-        doc.add(new IntField("length", mmUtterance.length , Field.Store.YES))
-        doc.add(new StringField("type", "utterance" , Field.Store.YES))
+        doc.add(new TextField("text", mmUtterance.text, Field.Store.YES))
+        doc.add(new IntField("start", mmUtterance.startPos, Field.Store.YES))
+        doc.add(new IntField("length", mmUtterance.length, Field.Store.YES))
+        doc.add(new StringField("type", "utterance", Field.Store.YES))
         docs ::= doc
 
+        var cuis = Set[String]()
+        var semtypes = Set[String]()
         mmUtterance.phrases.foreach(phrase => {
             phrase.mappings.foreach(mapping => {
                 val mapDoc = new Document
@@ -178,10 +204,15 @@ object IndexMetaMappedBaseline {
                 candDoc.add(new StringField("type", "candidate" , Field.Store.YES))
                 candDoc.add(new IntField("phraseStart",phrase.start, Field.Store.YES))
                 candDoc.add(new IntField("phraseLength",phrase.length, Field.Store.YES))
+                cuis += candidate.cui
+                semtypes ++= candidate.semtypes.toSet
 
                 docs ::= candDoc
             })
         })
+
+        cuis.foreach(cui => doc.add(new StringField("uttCui", cui , Field.Store.YES)))
+        semtypes.foreach(semtype => doc.add(new StringField("uttSemtype", semtype , Field.Store.YES)))
 
         docs
     }

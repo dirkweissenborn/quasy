@@ -4,14 +4,14 @@ import java.io.{PrintWriter, FileWriter, FileInputStream, File}
 import java.util.Properties
 import de.tu.dresden.quasy.model.annotation._
 import de.tu.dresden.quasy.enhancer._
-import clearnlp.{FullClearNlpPipeline}
+import clearnlp.FullClearNlpPipeline
 import de.tu.dresden.quasy.enhancer.opennlp.OpenNlpChunkEnhancer
 import de.tu.dresden.quasy.io.{LoadGoldStandards, AnnotatedTextSource}
 import de.tu.dresden.quasy.enhancer.regex.RegexAcronymEnhancer
 import scala.Array
-import umls.UmlsEnhancer
+import de.tu.dresden.quasy.enhancer.umls.{UmlsEnhancerOld, UmlsEnhancer}
 import de.tu.dresden.quasy.answer.AnswerQuestion
-import de.tu.dresden.quasy.model.db.{AnnotationCache, MetaMapCache, ScoreCache, LuceneIndex}
+import de.tu.dresden.quasy.model.db.{AnnotationCache, ScoreCache, LuceneIndex}
 import de.tu.dresden.quasy.answer.postprocess.{CacheUpdater, AnswerPostProcesserSet, GoldStandardCsvWriter}
 import org.apache.lucene.util.Version
 

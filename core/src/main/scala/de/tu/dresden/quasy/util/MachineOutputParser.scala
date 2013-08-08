@@ -4,7 +4,7 @@ import scala.util.parsing.combinator._
 import prolog.io.IO
 
 
-object MachineOutputParser extends RegexParsers {
+class MachineOutputParser extends RegexParsers {
 
     val singleQuote:Parser[String] = "'" ~> """(\\'|[^']|''|'(?![,\[\]()]))*""".r <~ "'"
     val doubleQuote:Parser[String] = "\"" ~> """(\\"|[^"]|""|"(?![,\[\]()]))*""".r <~ "\""

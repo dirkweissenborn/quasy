@@ -8,7 +8,7 @@ import model.{FactoidAnswer}
 import java.util.Properties
 import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.io.AnnotatedTextSource
-import de.tu.dresden.quasy.enhancer.umls.{UmlsEnhancerOld, UmlsEnhancer}
+import de.tu.dresden.quasy.enhancer.umls.{ UmlsEnhancer}
 import de.tu.dresden.quasy.enhancer.{EnhancementPipeline}
 import de.tu.dresden.quasy.enhancer.regex.RegexAcronymEnhancer
 import de.tu.dresden.quasy.enhancer.clearnlp.{FullClearNlpPipeline}
@@ -185,7 +185,7 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
         if(question.questionType == FactoidQ)
             mappedCandidates.take(5)
         else
-            mappedCandidates.take(1) ++ mappedCandidates.drop(1).takeWhile(_._2 >= -2.5)
+            mappedCandidates.take(3) ++ mappedCandidates.drop(3).takeWhile(_._2 >= -2.5)
     }
 
     def answerFactoidDecision(question:Question, pmids:List[Int]):List[(FactoidAnswer,Double)] = {

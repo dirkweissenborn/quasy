@@ -149,16 +149,9 @@ object UmlsEnhancerOld extends TextEnhancer {
     }
 
     def main(args:Array[String]) {
+        val text = "Screening for psychological risk factors is an important first step in safeguarding against nonadherence practices and identifying patients who may be vulnerable to the risks associated with opioid therapy."
 
-        var text = new AnnotatedText("Screening for psychological risk factors is an important first step in safeguarding against nonadherence practices and identifying patients who may be vulnerable to the risks associated with opioid therapy.")
-
-        enhance(text)
-
-        val xml = Xmlizer.toXml(text)
-
-        text = Xmlizer.fromXml(xml)
-
-        println(xml)
+        println(requestSemRep(text))
     }
 
 }

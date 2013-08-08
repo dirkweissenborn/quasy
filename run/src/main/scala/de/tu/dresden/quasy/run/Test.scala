@@ -23,29 +23,48 @@ object Test extends App{
         new QueryWrapperFilter(
             new TermQuery(new Term("type", "utterance"))))
 
-    val skuQuery = new QueryParser(Version.LUCENE_40,"",new KeywordAnalyzer).parse("(cui:C0868928 AND type:candidate) OR (cui:C1710187 AND type:candidate)")
+    val query1 = new QueryParser(Version.LUCENE_40,"",new KeywordAnalyzer).parse("(cui:C0868928 AND type:candidate)")
 
-    val skuJoinQuery = new ToParentBlockJoinQuery(
-        skuQuery,
+    val joinQuery1 = new ToParentBlockJoinQuery(
+        query1,
+        parentFilter,
+        ScoreMode.Total)
+
+    val query2 = new QueryParser(Version.LUCENE_40,"",new KeywordAnalyzer).parse("(semtype:dsyn AND type:candidate)")
+    val joinQuery2 = new ToParentBlockJoinQuery(
+        query2,
         parentFilter,
         ScoreMode.Total)
 
     val c = new ToParentBlockJoinCollector(
         Sort.INDEXORDER, // sort
-        1000,             // numHits
+        10000,             // numHits
         true,           // trackScores
         false           // trackMaxScore
     )
-    index.searcher.search(skuJoinQuery, c)
+
+    val query = new BooleanQuery()
+    query.add(joinQuery1,Occur.MUST)
+    query.add(joinQuery2,Occur.MUST)
+
+    index.searcher.search(query, c)
 
     val hits = c.getTopGroups(
-        skuJoinQuery,
+        joinQuery1,
         Sort.INDEXORDER,
         0,   // offset
         1000,  // maxDocsPerGroup
         0,   // withinGroupOffset
         true // fillSortFields
-    )
+    ).groups.zip(c.getTopGroups(
+        joinQuery2,
+        Sort.INDEXORDER,
+        0,   // offset
+        1000,  // maxDocsPerGroup
+        0,   // withinGroupOffset
+        true // fillSortFields
+    ).groups)
 
+    println(hits.map(_._1.groupValue).mkString(","))
     hits
 }

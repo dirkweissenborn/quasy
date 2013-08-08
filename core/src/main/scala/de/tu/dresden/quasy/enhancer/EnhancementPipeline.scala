@@ -77,7 +77,7 @@ class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
                 futures.foreach {
                     case (enhancer,future) => {
                         if (future != null) {
-                            val text = Futures.awaitAll(120000,future._2).head.asInstanceOf[Option[AnnotatedText]] match {
+                            val text = Futures.awaitAll(600000,future._2).head.asInstanceOf[Option[AnnotatedText]] match {
                                 case None => {
                                     LOG.warn("Annotation timed out for annotator: "+enhancer.getClass.getSimpleName)
                                     future._1

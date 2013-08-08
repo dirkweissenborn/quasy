@@ -11,14 +11,14 @@ import scala.Predef._
 object UmlsSemanticNetwork {
 
     private val abbreviations =
-        Source.fromFile(getClass.getClassLoader.getResource("umls/SemanticTypeMappings_2011AA.txt").getPath).
+        Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("umls/SemanticTypeMappings_2011AA.txt")).
             getLines().map(line => line.split("\\|")).map(a => (a(1),a(0))).toMap
 
     private val semanticTypes = abbreviations.map(e => (e._2,e._1)).toMap
 
 
     private val relations =
-        Source.fromFile(getClass.getClassLoader.getResource("umls/SRSTRE2.txt").getPath).
+        Source.fromInputStream(getClass.getClassLoader.getResourceAsStream("umls/SRSTRE2.txt")).
         getLines().map(line => {
             val Array(subj,pred,obj,"") = line.split("\\|",4)
             (getAbbreviation(subj),pred,getAbbreviation(obj))
@@ -42,7 +42,8 @@ object UmlsSemanticNetwork {
     }
 
     def main(args:Array[String]) {
-        //println(isa(getAbbreviation("Sign or Symptom"),getAbbreviation("Conceptual Entity")))
-        println(?("?", "part_of", getAbbreviation("Cell")).map(b => getFullname(b._1)).mkString(","))
+        println(getAbbreviation("Gene or Genome"))
+        println(?("?","isa",getAbbreviation("Idea or Concept")).map(b => "\""+b._1+"\"").mkString(","))
+        //println(?("?", "part_of", getAbbreviation("Cell")).map(b => getFullname(b._1)).mkString(","))
     }
 }
