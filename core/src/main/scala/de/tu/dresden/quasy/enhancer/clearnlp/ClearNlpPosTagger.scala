@@ -46,8 +46,7 @@ class ClearNlpPosTagger(val dictionaryFile:File,
                 segmenter.getSentences(new BufferedReader(new StringReader(sectionString))).map(tokenList => {
                     sentenceOffset =  sectionString.indexOf(tokenList.head, sentenceOffset)
 
-                    val nlp = new NLPDecode()
-                    val tree = nlp.toDEPTree(tokenList)
+                    val tree = NLPDecode.toDEPTree(tokenList)
                     components.foreach(component => component.process(tree) )
 
                     var tokenOffset = sentenceOffset

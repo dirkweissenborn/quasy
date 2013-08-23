@@ -13,6 +13,8 @@ import java.util.Properties
 import regex.RegexAcronymEnhancer
 import stanford.FullStanfordNlpEnhancer
 import gopubmed.GopubmedAnnotator
+import de.tu.dresden.quasy.enhancer.umls.UmlsEnhancer
+import sys.process._
 
 /**
  * @author dirk

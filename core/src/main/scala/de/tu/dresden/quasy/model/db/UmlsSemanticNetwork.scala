@@ -42,8 +42,10 @@ object UmlsSemanticNetwork {
     }
 
     def main(args:Array[String]) {
-        println(getAbbreviation("Gene or Genome"))
-        println(?("?","isa",getAbbreviation("Idea or Concept")).map(b => "\""+b._1+"\"").mkString(","))
+        println("\""+getFullname("bpoc")+"\"")
+        println(?("?","isa",getAbbreviation("Pathologic Function")).map(b => "\""+b._1+"\"").mkString(","))
+        //println(?("?","isa",getAbbreviation("Physical Object")).map(b => "\""+b._1+"\"").mkString(","))
+
         //println(?("?", "part_of", getAbbreviation("Cell")).map(b => getFullname(b._1)).mkString(","))
     }
 }

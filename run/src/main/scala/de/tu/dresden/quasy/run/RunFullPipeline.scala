@@ -2,10 +2,9 @@ package de.tu.dresden.quasy.run
 
 import java.io.{FileInputStream, File}
 import java.util.Properties
-import de.tu.dresden.quasy.io.AnnotatedTextSource._
 import de.tu.dresden.quasy.enhancer.clearnlp.{FullClearNlpPipeline}
 import de.tu.dresden.quasy.enhancer.opennlp.OpenNlpChunkEnhancer
-import de.tu.dresden.quasy.enhancer.{ TextEnhancer, EnhancementPipeline}
+import de.tu.dresden.quasy.enhancer.{TextEnhancer, EnhancementPipeline}
 import de.tu.dresden.quasy.enhancer.stanford.FullStanfordNlpEnhancer
 import de.tu.dresden.quasy.enhancer.gopubmed.GopubmedAnnotator
 import de.tu.dresden.quasy.io.AnnotatedTextSource

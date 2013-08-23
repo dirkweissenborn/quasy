@@ -88,9 +88,9 @@ class MedoidEM[T](val distanceMeasure: (T,T) => Double) extends ClusteringAlgori
 
             toRemove.foreach(cluster => clusters -= cluster)
         }
-
-        clusters
+        getAssignmentsFromPosterior
     }
+
 
     private def initClusters(objects:List[T], distanceMeasure: (T,T) => Double, nrOfClusters:Int) {
         val head = objects.head

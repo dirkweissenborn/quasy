@@ -25,7 +25,7 @@ object PrintDependencyTree {
 
           val pipeline = FullClearNlpPipeline.fromConfiguration(props)
           val chunker = OpenNlpChunkEnhancer.fromConfiguration(props)
-          val qE =  new QuestionEnhancer(LuceneIndex.fromConfiguration(props,Version.LUCENE_36))
+          //val qE =  new QuestionEnhancer(LuceneIndex.fromConfiguration(props,Version.LUCENE_36))
 
           var sentence = ""
           while(sentence != "a") {
@@ -35,7 +35,7 @@ object PrintDependencyTree {
               pipeline.enhance(text)
               chunker.enhance(text)
               //UmlsEnhancer.enhance(text)
-              qE.enhance(text)
+              //qE.enhance(text)
 
 
               text.getAnnotations[Sentence].foreach(s => {

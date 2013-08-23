@@ -2,13 +2,13 @@ package de.tu.dresden.quasy.answer
 
 import de.tu.dresden.quasy.model.annotation._
 import postprocess.AnswerPostProcessor
-import fetch.{NlmPubmedFetcher, BioASQPubMedFetcher}
+import fetch.{NlmPubmedFetcher}
 import model.{FactoidAnswer}
 
 import java.util.Properties
 import de.tu.dresden.quasy.model.AnnotatedText
 import de.tu.dresden.quasy.io.AnnotatedTextSource
-import de.tu.dresden.quasy.enhancer.umls.{ UmlsEnhancer}
+import de.tu.dresden.quasy.enhancer.umls.{UmlsEnhancer}
 import de.tu.dresden.quasy.enhancer.{EnhancementPipeline}
 import de.tu.dresden.quasy.enhancer.regex.RegexAcronymEnhancer
 import de.tu.dresden.quasy.enhancer.clearnlp.{FullClearNlpPipeline}

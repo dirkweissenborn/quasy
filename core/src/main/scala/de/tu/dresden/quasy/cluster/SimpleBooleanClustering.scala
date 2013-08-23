@@ -23,6 +23,6 @@ class SimpleBooleanClustering[T](val equals: (T,T) => Boolean) extends Clusterin
             }
         })
 
-        clusters
+        getAssignmentsFromPosterior
     }
 }

@@ -217,13 +217,33 @@
           <artifactId>lucene-join</artifactId>
       </dependency>
 
-    <!--dependency>
-      <groupId>pitt.search</groupId>
-      <artifactId>semantic-vectors</artifactId>
-      <version>3.8</version>
-      <scope>system</scope>
-      <systemPath>${libpath}/semanticvectors-3.8.jar</systemPath>
-    </dependency-->
+      <dependency>
+          <groupId>org.apache.lucene</groupId>
+          <artifactId>lucene-codecs</artifactId>
+      </dependency>
+
+
+      <!--dependency>
+        <groupId>pitt.search</groupId>
+        <artifactId>semantic-vectors</artifactId>
+        <version>3.8</version>
+        <scope>system</scope>
+        <systemPath>${libpath}/semanticvectors-3.8.jar</systemPath>
+      </dependency-->
+
+      <dependency>
+          <groupId>com.thinkaurelius.titan</groupId>
+          <artifactId>titan-core</artifactId>
+      </dependency>
+
+      <dependency>
+          <groupId>com.thinkaurelius.titan</groupId>
+          <artifactId>titan-berkeleyje</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>com.thinkaurelius.titan</groupId>
+          <artifactId>titan-lucene</artifactId>
+      </dependency>
 
 
   </dependencies>

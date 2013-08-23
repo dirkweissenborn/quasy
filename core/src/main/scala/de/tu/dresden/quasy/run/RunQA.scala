@@ -120,7 +120,7 @@ object RunQA {
 
         texts.foreach{ case (qa,text) => {
             val pmids = if(qa.documents ne null)
-                qa.documents.map(doc => doc.substring(doc.lastIndexOf("/")+1).toInt).toList
+                qa.documents.map(doc => doc.substring(doc.lastIndexOf("/")+1).toInt).toList.take(10)
             else
                 null
 

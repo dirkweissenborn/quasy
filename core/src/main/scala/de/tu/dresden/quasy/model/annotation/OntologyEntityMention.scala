@@ -17,11 +17,10 @@ class OntologyEntityMention( spans:Array[Span],
     def this(begin:Int, end:Int, context:AnnotatedText, ontologyConcepts:List[OntologyConcept]) = this(Array(new Span(begin,end)), context, ontologyConcepts)
 
     override def addToContext {
-        if (!getTokens.forall(_.posTag.matches(PosTag.ANYVERB_PATTERN)))
-            context.getAnnotations[OntologyEntityMention].find(_.spans.toList.equals(spans.toList)) match {
-                case Some(em) => em.ontologyConcepts ++= ontologyConcepts
-                case _ => super.addToContext
-            }
+        context.getAnnotations[OntologyEntityMention].find(_.spans.toList.equals(spans.toList)) match {
+            case Some(em) => em.ontologyConcepts ++= ontologyConcepts
+            case _ => super.addToContext
+        }
     }
 
     override def toString = {

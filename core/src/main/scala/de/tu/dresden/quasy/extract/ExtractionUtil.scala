@@ -1,4 +1,4 @@
-package de.tu.dresden.quasy.run
+package de.tu.dresden.quasy.extract
 
 import java.io.File
 import de.tu.dresden.quasy.model.db.LuceneIndex
@@ -12,6 +12,7 @@ import org.apache.lucene.document.Document
 import org.apache.lucene.index.Term
 import scala.Some
 import scala.collection.JavaConversions._
+import scala.collection.parallel.ParSeq
 
 /**
  * @author dirk
@@ -21,7 +22,13 @@ import scala.collection.JavaConversions._
 class ExtractionUtil(val indexDir:File) {
 
     println("Opening indexes...")
-    private val indexes = indexDir.listFiles().toSeq.par.map(i => new LuceneIndex(i,new StandardAnalyzer(Version.LUCENE_40)))
+    private val indexes =
+        if(indexDir.listFiles().exists(_.isDirectory))
+            indexDir.listFiles().toSeq.par.map(i => new LuceneIndex(i,new StandardAnalyzer(Version.LUCENE_40)))
+        else
+            ParSeq(new LuceneIndex(indexDir, new StandardAnalyzer(Version.LUCENE_40)))
+
+    val nrOfIndexes = indexes.size
 
     private val parentFilter = new CachingWrapperFilter(
         new QueryWrapperFilter(
@@ -63,12 +70,44 @@ class ExtractionUtil(val indexDir:File) {
         }).seq.flatten.toArray
     }
 
+    def utteranceSemTypeFrequency(semtype:String) = {
+        indexes.map(index => index.reader.docFreq(new Term("uttSemtype",semtype))).sum
+    }
+
+    def utteranceCuiFrequency(cui:String) = {
+        indexes.map(index => index.reader.docFreq(new Term("uttCui",cui))).sum
+    }
+
+}
+
+object ExtractionUtil {
+
+    final val START = "start"
+    final val END = "end"
+    final val LENGTH = "length"
+    final val POS = "pos"
+    final val TYP = "type"
+    final val CUI = "cui"
+    final val PMID = "pmid"
+    final val TEXT = "text"
+    final val SEMTYPE = "semtype"
+    final val SCORE = "score"
+    final val SECTION = "section"
+    final val NUMBER = "number"
+    final val FROMCUI = "fromCui"
+    final val TOCUI = "toCui"
+    final val PHRASE_START = "phraseStart"
+    final val PHRASE_LENGTH = "phraseLength"
+
+    final val FREQUENCIES_FILENAME = "frequencies.tsv"
+
     //Start,End -> best annotation
-    def selectAnnotations(parent:Document, annotations:Array[Document],fromCui:String,toCui:String): Map[(Int,Int),Document] = {
-        val offset = parent.get(ExtractionUtil.START).toInt
+    def selectAnnotations(parent:Document, annotations:Array[Document]): Map[(Int,Int),List[Document]] = {
+        val offset = parent.get(START).toInt
+        val docLength = parent.get(LENGTH).toInt
 
         var groupedAnnotations = annotations.groupBy(doc => {
-            val Array(start,length) = doc.get(ExtractionUtil.POS).split(":",2).map(_.toInt)
+            val Array(start,length) = doc.get(POS).split(":",2).map(_.toInt)
             (start,length)
         })
 
@@ -88,53 +127,29 @@ class ExtractionUtil(val indexDir:File) {
             }
         })
 
-        val preferredCuis = List(fromCui,toCui)
-
         groupedAnnotations = groupedAnnotations.filter(ann => filteredKeys.contains(ann._1))
 
         // select annotations with highest (negative scores so actually lowest) scores with preference for preferred cuis
         groupedAnnotations.map {
             case ((start,length),annots) => {
-                ( (start-offset,start-offset+length),
-                    annots.reduceLeft((maxDoc,doc) => {
-                        val max = maxDoc.get(ExtractionUtil.SCORE).toInt
-                        val current = doc.get(ExtractionUtil.SCORE).toInt
-                        if(current < max)
-                            doc
-                        else if(current > max)
-                            maxDoc
-                        else if(preferredCuis.contains(doc.get(ExtractionUtil.CUI)))
-                            doc
-                        else
-                            maxDoc
-                    }) )
+                val newStart = start - offset
+                val newEnd = start - offset + length
+                val bestAnnots =  annots.tail.foldLeft(List(annots.head))((maxDocs,doc) => {
+                    val max = maxDocs.head.get(SCORE).toInt
+                    val current = doc.get(SCORE).toInt
+                    if(current < max)
+                        List(doc)
+                    else if(current > max)
+                        maxDocs
+                    else
+                        doc :: maxDocs
+                })
+
+                if(newStart >= 0 && newEnd > newStart && newEnd < docLength)
+                    ((newStart,newEnd), bestAnnots)
+                else
+                    ((newStart,newEnd), null)
             }
-        }
+        }.filter(_._2 ne null)
     }
-
-    def utteranceSemTypeFrequency(semtype:String) = {
-        indexes.map(index => index.reader.docFreq(new Term("uttSemtype",semtype))).sum
-    }
-
-    def utteranceCuiFrequency(cui:String) = {
-        indexes.map(index => index.reader.docFreq(new Term("uttCui",cui))).sum
-    }
-
-}
-
-object ExtractionUtil {
-
-    final val START = "start"
-    final val END = "end"
-    final val POS = "pos"
-    final val TYP = "type"
-    final val CUI = "cui"
-    final val PMID = "pmid"
-    final val TEXT = "text"
-    final val SEMTYPE = "semtype"
-    final val SCORE = "score"
-    final val SECTION = "section"
-    final val NUMBER = "number"
-    final val FROMCUI = "fromCui"
-    final val TOCUI = "toCui"
 }

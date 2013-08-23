@@ -116,7 +116,7 @@ object IndexMetaMappedBaselineFromGz {
                     counter += 1
                     currentUtterance = ""
 
-                    if(counter % 10000 == 0) {
+                    if(counter % 1000 == 0) {
                         LOG.info(inputFile+": "+counter+" utterances processed!")
                     }
                 }
@@ -129,7 +129,7 @@ object IndexMetaMappedBaselineFromGz {
         })
 
         is.close()
-        writingActor ! None
+        writingActor !! None
     }
 
     val writingActor = new Actor {

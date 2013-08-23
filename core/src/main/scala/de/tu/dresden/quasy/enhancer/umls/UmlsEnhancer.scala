@@ -5,7 +5,7 @@ import de.tu.dresden.quasy.model.annotation.{OntologyEntityMention, Token, UmlsC
 import de.tu.dresden.quasy.util.Xmlizer
 import de.tu.dresden.quasy.enhancer.TextEnhancer
 import scala.sys.process._
-import scala.actors.Futures
+import scala.actors.{Actor, Futures}
 import org.apache.commons.logging.LogFactory
 import java.io.{InputStreamReader, BufferedReader}
 
@@ -110,10 +110,10 @@ object UmlsEnhancer extends TextEnhancer {
             res
         })
 
-        Futures.awaitAll(120000,result).head.asInstanceOf[Option[String]] match {
+        Futures.awaitAll(20000,result).head.asInstanceOf[Option[String]] match {
             case None => {
                 LOG.warn("Annotation timed out in UmlsEnhancer")
-                proc.destroy()
+                Actor.actor(proc.destroy()).start()
                 ""
             }
             case Some(t) => t

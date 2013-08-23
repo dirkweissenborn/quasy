@@ -69,9 +69,9 @@ class Token(spans:Array[Span],context:AnnotatedText, val position:Int) extends A
     }
 }
 
-case class DepTag(tag:String, dependsOn:Int)
+case class DepTag(var tag:String, var dependsOn:Int)
 
-case class SemanticRoleLabel(val head:Int, val label:String)
+case class SemanticRoleLabel(head:Int, label:String)
 
 object Token {
 
