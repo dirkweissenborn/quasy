@@ -15,7 +15,7 @@ import org.apache.lucene.analysis.Analyzer
  * Date: 5/22/13
  * Time: 11:06 AM
  */
-case class LuceneIndex(luceneIndex:File, var analyzer: Analyzer = new EnglishAnalyzer(Version.LUCENE_40)) {
+case class LuceneIndex(luceneIndex:File, var analyzer: Analyzer = new EnglishAnalyzer(Version.LUCENE_41)) {
 
     var reader:IndexReader = null
     var searcher:IndexSearcher = null
@@ -45,7 +45,7 @@ case class LuceneIndex(luceneIndex:File, var analyzer: Analyzer = new EnglishAna
 
 object LuceneIndex{
     var index:LuceneIndex = null
-    def fromConfiguration(config:Properties, version:Version = Version.LUCENE_40):LuceneIndex = {
+    def fromConfiguration(config:Properties, version:Version = Version.LUCENE_41):LuceneIndex = {
         if (index == null)
             index = LuceneIndex({
                 val indexPath: String = config.getProperty("lucene.index")

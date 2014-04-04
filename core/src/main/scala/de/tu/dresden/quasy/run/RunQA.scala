@@ -66,8 +66,10 @@ object RunQA {
 
         val config = new File(args(0))
         val questionsFile = new File(args(1))
-        val outputWriter = new PrintWriter(new FileWriter(args(1)+".result"))
-        outputWriter.print("{\"system\": \"BioASQ_Baseline_1bB\", \"username\": \"gbt\", \"password\": \"gr1979\", \n\"questions\": [")
+        val resultFile = new File(args(1)+".result")
+        val exists = resultFile.exists()
+
+        val outputWriter = new PrintWriter(new FileWriter(resultFile,true))
 
         val props = new Properties()
         props.load(new FileInputStream(config))
@@ -78,13 +80,23 @@ object RunQA {
         ScoreCache.loadCache(new File(cacheDir,questionsFile.getName+".scores"))
         AnnotationCache.loadCache(new File(cacheDir,questionsFile.getName+".annots"))
 
-        val luceneIndex = LuceneIndex.fromConfiguration(props,Version.LUCENE_36)
+        val luceneIndex = LuceneIndex.fromConfiguration(props,Version.LUCENE_41)
 
         val fullClearNlp = FullClearNlpPipeline.fromConfiguration(props)
         val chunker = OpenNlpChunkEnhancer.fromConfiguration(props)
         val fullPipeline = new EnhancementPipeline(List(fullClearNlp, chunker, UmlsEnhancer,RegexAcronymEnhancer, new OntologyEntitySelector(0.1))) //, new UniprotEnhancer, new DoidEnhancer, new GoEnhancer))//, new JochemEnhancer))
 
-        val goldAnswers = LoadGoldStandards.load(questionsFile)
+        var goldAnswers = LoadGoldStandards.load(questionsFile)
+
+        if(!exists) {
+            outputWriter.print("{\"system\": \"BioASQ_Baseline_1bB\", \"username\": \"gbt\", \"password\": \"gr1979\", \n\"questions\": [")
+            outputWriter.flush()
+        } else {
+            val answers = LoadGoldStandards.loadAnswers(resultFile)
+            goldAnswers = goldAnswers.filterNot(g => answers.exists(_.id == g.id))
+        }
+
+
         var qas = Map[Question,Set[String]]()
         val questionEnhancer = new QuestionEnhancer(luceneIndex)
 
@@ -93,7 +105,7 @@ object RunQA {
                 qa.body.substring(0,qa.body.length-1)+"?"
             else
                 qa.body
-            val text = AnnotationCache.getCachedAnnotatedText(t)
+            val text = AnnotationCache.getCachedAnnotatedText(t,qa.id)
 
             fullPipeline.process(AnnotatedTextSource(text))
             //new OntologyEntitySelector(0.1).enhance(text)
@@ -118,7 +130,7 @@ object RunQA {
         )
         val answerer = new AnswerQuestion(props,evaluation)
 
-        texts.foreach{ case (qa,text) => {
+        texts.drop(1).foreach{ case (qa,text) =>
             val pmids = if(qa.documents ne null)
                 qa.documents.map(doc => doc.substring(doc.lastIndexOf("/")+1).toInt).toList.take(10)
             else
@@ -130,7 +142,7 @@ object RunQA {
                 outputWriter.println("{ \"id\": \""+qa.id+"\",")
 
                 answerer.answer(question,pmids) match {
-                    case Left(factoidAnswers) => {
+                    case Left(factoidAnswers) =>
                         outputWriter.println("\"exact_answer\": ["+
                             factoidAnswers.map(
                                 a => "["+
@@ -141,7 +153,7 @@ object RunQA {
                                     } +"]").mkString(",") +"]}")
                         if(!texts.last.equals(text))
                             outputWriter.print(",")
-                    }
+
                     case Right(answers) =>
                 }
                 outputWriter.flush()
@@ -149,7 +161,7 @@ object RunQA {
 
             ScoreCache.storeCache
             AnnotationCache.storeCache
-        }}
+        }
 
         luceneIndex.close
         outputWriter.println("]}")

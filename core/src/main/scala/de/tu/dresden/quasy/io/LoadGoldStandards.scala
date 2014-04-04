@@ -19,6 +19,26 @@ object LoadGoldStandards {
         qs.questions
     }
 
+    def loadAnswers(fromFile:File) = {
+        var json =  Source.fromFile(fromFile).mkString("").trim()
+        json = json.replaceAll(""""exact_answer":\s*("[^"]+")""","\"exact_answer\": [[$1]]").replaceAll(""""exact_answer":\s*(\[[^\]\[]+\])""","\"exact_answer\": [$1]")
+        if(json.isEmpty)
+            Array[IdAnswer]()
+        else {
+            if(json.endsWith(","))
+                json = json.substring(0,json.length-1) + "]}"
+            if(!json.endsWith("]}"))
+                json += "]}"
+            val gson = new Gson()
+            val qs = gson.fromJson(json, classOf[Result])
+            qs.questions
+        }
+    }
+
+    case class Result(system:String,username:String,password:String,questions:Array[IdAnswer])
+
+    case class IdAnswer(id:String,exact_answer:Array[Array[String]])
+
     case class Questions(questions: Array[QuestionAnswer])
 
     case class QuestionAnswer(id:String, `type`:String, body:String ,documents:Array[String], exact_answer:Array[Array[String]] )

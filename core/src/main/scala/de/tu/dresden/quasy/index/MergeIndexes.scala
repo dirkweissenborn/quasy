@@ -20,8 +20,8 @@ object MergeIndexes {
         INDEX_DIR.mkdir()
 
         try {
-            val analyzer = new StandardAnalyzer(Version.LUCENE_40)
-            val config = new IndexWriterConfig(Version.LUCENE_40,analyzer)
+            val analyzer = new StandardAnalyzer(Version.LUCENE_41)
+            val config = new IndexWriterConfig(Version.LUCENE_41,analyzer)
             config.setRAMBufferSizeMB(256)
             val writer = new IndexWriter(FSDirectory.open(INDEX_DIR),config)
 

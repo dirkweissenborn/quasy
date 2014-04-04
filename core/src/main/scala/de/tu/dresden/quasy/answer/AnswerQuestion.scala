@@ -151,7 +151,7 @@ class AnswerQuestion(config:Properties,evalWriter:AnswerPostProcessor = null) {
         })
         var sortedCandidates = answerCandidates.toSeq.sortBy(a =>
             -FinalConceptScorer.scoreInternal(a))
-        sortedCandidates = sortedCandidates.take(30)
+        sortedCandidates = sortedCandidates.take(if(question.questionType == ListQ)  30 else 15)
 
         sortedCandidates.foreach(fa =>{
             idfScorer.score(fa)

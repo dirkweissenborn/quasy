@@ -23,18 +23,19 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
             //What be ...? - questions
             val chunks = text.getAnnotationsBetween[Chunk](question.begin, question.end)
 
+            if(chunks.size < 2)
+                println(text.text)
 
             //############ WHERE #####################
             if (WHERE_IN_NP(chunks)) {
                 val target = extractTargetTypes(chunks(2))
                 target match {
-                    case ConceptualAnswerType(_, concepts) => {
+                    case ConceptualAnswerType(_, concepts) =>
                         val semanticTypes = concepts.filter(_.isInstanceOf[UmlsConcept]).map(_.asInstanceOf[UmlsConcept]).flatMap(_.semanticTypes).toSet
                         var answerTypes = semanticTypes.flatMap(st => UmlsSemanticNetwork.?("?", "part_of", st).map(_._1)).toSet
                         if (answerTypes.isEmpty)
                             answerTypes = whereAnswerTypes
                         question.answerType = SemanticAnswerType(answerTypes)
-                    }
                     case _ => question.answerType = SemanticAnswerType(whereAnswerTypes)
                 }
             }
@@ -42,11 +43,14 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
                 question.answerType = SemanticAnswerType(whereAnswerTypes)
 
             else if(question.coveredText.toLowerCase.startsWith("list")){
-                question.answerType = extractOntologyEntityMention(chunks(0).getTokens.drop(1)) match {
-                    case (Some(oem),targets) => {
-                        ConceptualAnswerType(targets, oem.ontologyConcepts)
-                    }
-                    case (None,targets) => SimpleAnswerType(targets)
+                question.answerType = {
+                    if(chunks(0).chunkType == "NP")
+                        extractOntologyEntityMention(chunks(0).getTokens.drop(1)) match {
+                            case (Some(oem),targets) =>
+                                ConceptualAnswerType(targets, oem.ontologyConcepts)
+                            case (None,targets) => SimpleAnswerType(targets)
+                        }
+                    else extractTargetTypes(chunks(1))
                 }
             }
             //########## WHAT ########################
@@ -61,41 +65,37 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
                 question.answerType = extractTargetTypes(chunks(2))
             else if (WHAT_DO_STH_DO(question)){
                 question.getTokens.find(t => t.srls.exists(srl => question.getTokens(srl.head-1).depDepth == 0 && srl.label.matches("A[03]"))) match {
-                    case Some(token) => {
+                    case Some(token) =>
                         val subjTokens =
                             question.dependencyTree.getSubtree(token).nodes.toList.
                             map(_.value.asInstanceOf[DepNode]).flatMap(_.tokens).toList.sortBy(_.position).filterNot(_.posTag.equals(PosTag.Preposition_or_subordinating_conjunction))
 
                         extractOntologyEntityMention(subjTokens) match {
-                            case (Some(oem),_) => {
+                            case (Some(oem),_) =>
                                 val semanticTypes = oem.ontologyConcepts.filter(_.isInstanceOf[UmlsConcept]).map(_.asInstanceOf[UmlsConcept]).flatMap(_.semanticTypes).toSet
                                 val answerTypes = semanticTypes.flatMap(st =>
                                     UmlsSemanticNetwork.?(st, ".*"+question.getTokens.find(_.depDepth == 0).get.lemma+".*", "?").map(_._3)).toSet
                                 question.answerType = SemanticAnswerType(answerTypes)
-                            }
                             case (None,_) =>
                         }
-                    }
                     case None =>
                 }
             }
             else if (WHAT_DO_STH(question)){
                 question.getTokens.find(t => t.srls.exists(srl => question.getTokens(srl.head-1).depDepth == 0 && srl.label.matches("A[12]"))) match {
-                    case Some(token) => {
+                    case Some(token) =>
                         val objTokens =
                             question.dependencyTree.getSubtree(token).nodes.toList.
                                 map(_.value.asInstanceOf[DepNode]).flatMap(_.tokens).toList.sortBy(_.position)
 
                         extractOntologyEntityMention(objTokens) match {
-                            case (Some(oem),_) => {
+                            case (Some(oem),_) =>
                                 val semanticTypes = oem.ontologyConcepts.filter(_.isInstanceOf[UmlsConcept]).map(_.asInstanceOf[UmlsConcept]).flatMap(_.semanticTypes).toSet
                                 val answerTypes = semanticTypes.flatMap(st =>
                                     UmlsSemanticNetwork.?("?", ".*"+question.getTokens.find(_.depDepth == 0).get.lemma+".*", st).map(_._1)).toSet
                                 question.answerType = SemanticAnswerType(answerTypes)
-                            }
                             case (None,_) =>
                         }
-                    }
                     case None =>
                 }
             }
@@ -106,27 +106,24 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
                 //Is Rheumatoid Arthritis !the result! of ...?  -> attr
                 //Is Rheumatoid Arthritis !more common! in ...? -> acomp
                 question.getTokens.find(t => t.depDepth == 1 && t.depTag.tag.matches("acomp|attr")) match {
-                    case Some(t) => {
+                    case Some(t) =>
                         val depTree = question.dependencyTree
                         val nodes = depTree.getSubtree(t).nodes.toList.map(_.value.asInstanceOf[DepNode])
                         criterion = nodes.filter(_.nodeHead.position <= t.position).flatMap(_.tokens).toSeq.sortBy(_.position).map(_.coveredText).mkString(" ")
-                    }
-                    case None =>
+                    case None => //Nothing to do
                 }
                 var answers = List[FactoidAnswer]()
                 question.getTokens.find(t => t.depTag.tag.matches("prep")) match {
-                    case Some(t) => {
+                    case Some(t) =>
                         criterion += " "+t.coveredText
                         val it = question.getTokens.dropRight(1).filter(_.position > t.position).iterator
                         while (it.hasNext) {
                             val targetTokens = it.takeWhile(!_.lemma.matches(",|or")).toList
                             answers ++= (extractOntologyEntityMention(targetTokens) match {
-                                case (Some(oem),targets) => {
+                                case (Some(oem),targets) =>
                                     oem.ontologyConcepts.map(oc => FactoidAnswer(targets.map(_.coveredText).mkString(" "), oc,question))
-                                }
                                 case (None,targets) => List(FactoidAnswer(targets.map(_.coveredText).mkString(" "),question))
                             } )
-                        }
                     }
                     case None =>
                 }
@@ -138,36 +135,38 @@ class QuestionEnhancer(val luceneIndex: LuceneIndex) extends TextEnhancer {
 
     protected def extractTargetTypes(chunk: Chunk): AnswerType = {
         val targetTokens = chunk.getTokens.filter(_.posTag.matches(targetTypePosPattern))
-
         extractOntologyEntityMention(targetTokens) match {
-            case (Some(oem),targets) => {
+            case (Some(oem),targets) =>
                 ConceptualAnswerType(targets, oem.ontologyConcepts)
-            }
             case (None,targets) => SimpleAnswerType(targets)
         }
     }
 
     protected def extractOntologyEntityMention(targetTokens: List[Token]): (Option[OntologyEntityMention],List[Token]) = {
-        val text = targetTokens.head.context
-        var targets = targetTokens
+        if(targetTokens.isEmpty) {
+            (None,List[Token]())
+        } else {
+            val text = targetTokens.head.context
+            var targets = targetTokens
 
-        //an answer type can only be an answer type if it has at least 100 appearances in medline
-        while ( {
-            val queryStr: String = targets.map(_.coveredText).permutations.map(perm => "\"" + perm.mkString(" ") + "\"").mkString(" OR ")
-            val q = new QueryParser(Version.LUCENE_36, "contents", luceneIndex.analyzer).parse(queryStr)
+            //an answer type can only be an answer type if it has at least 100 appearances in medline
+            while ( {
+                val queryStr: String = targets.map(_.coveredText).permutations.map(perm => "\"" + perm.mkString(" ") + "\"").mkString(" OR ")
+                val q = new QueryParser(Version.LUCENE_41, "contents", luceneIndex.analyzer).parse(queryStr)
 
-            val result = luceneIndex.searcher.search(q, null, 100)
-            result.totalHits < 100 && !targets.isEmpty
-        })
-            targets = targets.drop(1)
-        if(targets.isEmpty)
-            targets = targetTokens
+                val result = luceneIndex.searcher.search(q, null, 100)
+                result.totalHits < 100 && !targets.isEmpty
+            })
+                targets = targets.drop(1)
+            if(targets.isEmpty)
+                targets = targetTokens
 
-        val begin = targets.minBy(_.begin).begin
-        val end = targets.maxBy(_.end).end
+            val begin = targets.minBy(_.begin).begin
+            val end = targets.maxBy(_.end).end
 
-        (text.getAnnotationsBetween[OntologyEntityMention](targetTokens.head.begin, targetTokens.last.end).
-            find(oem => oem.begin == begin && oem.end == end && oem.ontologyConcepts.exists(_.isInstanceOf[UmlsConcept])),targets)
+            (text.getAnnotationsBetween[OntologyEntityMention](targetTokens.head.begin, targetTokens.last.end).
+                find(oem => oem.begin == begin && oem.end == end && oem.ontologyConcepts.exists(_.isInstanceOf[UmlsConcept])),targets)
+        }
     }
 
     //WHERE PATTERN

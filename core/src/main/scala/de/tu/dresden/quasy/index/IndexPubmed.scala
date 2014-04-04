@@ -35,7 +35,7 @@ object IndexPubmed {
             INDEX_DIR.listFiles().foreach(_.delete())
         }
 
-        val config = new IndexWriterConfig(Version.LUCENE_36,new EnglishAnalyzer(Version.LUCENE_36))
+        val config = new IndexWriterConfig(Version.LUCENE_41,new EnglishAnalyzer(Version.LUCENE_41))
         config.setRAMBufferSizeMB(64)
         INDEX_WRITER = new IndexWriter(FSDirectory.open(INDEX_DIR), config)
 
@@ -43,46 +43,52 @@ object IndexPubmed {
 
         writingActor.start()
 
-        pubmedDump.listFiles().foreach(dump=> {
-            LOG.info("writing dump "+dump.getName+" to index!")
+        pubmedDump.listFiles().withFilter(!_.getAbsolutePath.endsWith(".processed")).foreach(dump=> {
+            val doneFile = new File(dump.getAbsolutePath+".processed")
 
-            val input:InputStream = if(dump.getName.endsWith(".gz")) new GZIPInputStream(new FileInputStream(dump)) else new FileInputStream(dump)
-            val xml = new XMLEventReader(Source.fromInputStream(input))
+            if(!doneFile.exists()) {
+                LOG.info("writing dump "+dump.getName+" to index!")
 
-            var currentEntry = ""
-            xml.next();xml.next()
-            while(xml.hasNext) {
-                val next = xml.next()
-                next match {
-                    case EvElemEnd(_,"MedlineCitation")  => {
-                        currentEntry += "</MedlineCitation>"
-                        if (currentEntry.contains("<Abstract>")) {
-                            try {
-                                val xml = XML.loadString(currentEntry)
+                val input:InputStream = if(dump.getName.endsWith(".gz")) new GZIPInputStream(new FileInputStream(dump)) else new FileInputStream(dump)
+                val xml = new XMLEventReader(Source.fromInputStream(input))
 
-                                if ((xml \\ "Language").exists(_.text.equals("eng"))) {
-                                    val doc = toDocument(xml)
-                                    if (future != null)
-                                        future.apply()
-                                    future = writingActor !!  Some(doc)
+                var currentEntry = ""
+                xml.next();xml.next()
+                while(xml.hasNext) {
+                    val next = xml.next()
+                    next match {
+                        case EvElemEnd(_,"MedlineCitation")  => {
+                            currentEntry += "</MedlineCitation>"
+                            if (currentEntry.contains("<Abstract>")) {
+                                try {
+                                    val xml = XML.loadString(currentEntry)
+
+                                    if ((xml \\ "Language").exists(_.text.equals("eng"))) {
+                                        val doc = toDocument(xml)
+                                        if (future != null)
+                                            future.apply()
+                                        future = writingActor !!  Some(doc)
+                                    }
+                                } catch {
+                                    case e => LOG.error(currentEntry);e.printStackTrace()
                                 }
-                            } catch {
-                                case e => LOG.error(currentEntry);e.printStackTrace()
                             }
+                            currentEntry = ""
                         }
-                        currentEntry = ""
-                    }
-                    case EvElemStart(_,elem,attrs,_) if elem != "\n"  =>
-                        currentEntry += "<"+elem+attrsToString(attrs)+">"
-                    case EvElemEnd(_,elem) =>
-                        currentEntry += "</"+elem+">\n"
-                    case EvText(text) =>  currentEntry += text
-                    case EvEntityRef(entity) => {
-                        entity
+                        case EvElemStart(_,elem,attrs,_) if elem != "\n"  =>
+                            currentEntry += "<"+elem+attrsToString(attrs)+">"
+                        case EvElemEnd(_,elem) =>
+                            currentEntry += "</"+elem+">\n"
+                        case EvText(text) =>  currentEntry += text
+                        case EvEntityRef(entity) => {
+                            entity
+                        }
                     }
                 }
+                INDEX_WRITER.commit()
+                doneFile.createNewFile()
             }
-            INDEX_WRITER.commit()
+
         })
 
         writingActor ! None

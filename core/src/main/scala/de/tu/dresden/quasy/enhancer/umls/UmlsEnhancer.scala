@@ -86,38 +86,17 @@ object UmlsEnhancer extends TextEnhancer {
         })
     }
 
+    import scala.sys.process._
+
     def requestSemRep(text:String):String = {
-        val commands = Array("sh","-c","echo "+"\""+text+"\" | "+pathToMM+" -AlN")
-        var proc:java.lang.Process = null
+        //val commands = Array("sh","-c","echo "+"\""+text+"\" | "+pathToMM+" -AlN")
+        //var proc:java.lang.Process = null
 
-        val result = Futures.future({
-            proc = Runtime.getRuntime.exec(commands)
-            var res = ""
+        //Array("sh","-c","echo "+"\""+text+"\" | "+pathToMM+" -AlN")
 
-            val stdInput = new BufferedReader(new
-                    InputStreamReader(proc.getInputStream))
+        val result = (("echo "+text.replaceAll("\"","'").replaceAll("\n"," ")) #| (pathToMM + " -AlN")).!!
 
-            var s = ""
-            try {
-                while ({s = stdInput.readLine(); s != null}) {
-                    res += s +"\n"
-                }
-            }
-            catch {
-                case e:Exception =>
-            }
-
-            res
-        })
-
-        Futures.awaitAll(20000,result).head.asInstanceOf[Option[String]] match {
-            case None => {
-                LOG.warn("Annotation timed out in UmlsEnhancer")
-                Actor.actor(proc.destroy()).start()
-                ""
-            }
-            case Some(t) => t
-        }
+        result
     }
 
     def main(args:Array[String]) {

@@ -41,7 +41,7 @@ object AnnotationCache {
     }
 
     def getCachedAnnotatedTextOrElse(text:String, default: AnnotatedText) = cache.getOrElse(AnnotatedText.cleanText(text),default)
-    def getCachedAnnotatedText(text:String) = cache.getOrElse(AnnotatedText.cleanText(text),new AnnotatedText(text))
+    def getCachedAnnotatedText(text:String,id:String ="NO_ID") = cache.getOrElse(AnnotatedText.cleanText(text),new AnnotatedText(id,text))
 
     //def addToCache(request:String,response:String) = cache += (request -> response)
     def addToCache(text:AnnotatedText, update:Boolean = false) =
