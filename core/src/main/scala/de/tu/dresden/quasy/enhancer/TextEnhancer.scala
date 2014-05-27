@@ -17,8 +17,8 @@ abstract class TextEnhancer extends Actor {
 
     def enhance(text: AnnotatedText) {
         if(!text.enhancedBy.contains(id)) {
-            pEnhance(text)
-            text.enhancedBy += id
+          pEnhance(text)
+          text.enhancedBy += id
         }
     }
 

@@ -89,12 +89,13 @@ object UmlsEnhancer extends TextEnhancer {
     import scala.sys.process._
 
     def requestSemRep(text:String):String = {
-        //val commands = Array("sh","-c","echo "+"\""+text+"\" | "+pathToMM+" -AlN")
-        //var proc:java.lang.Process = null
+        val buffer = new StringBuffer
+        val proc = (("echo "+text.replaceAll("\"","'").replaceAll("\n"," ")) #| (pathToMM + " -AlN")).run(BasicIO(false, buffer, None))
 
-        //Array("sh","-c","echo "+"\""+text+"\" | "+pathToMM+" -AlN")
-
-        val result = (("echo "+text.replaceAll("\"","'").replaceAll("\n"," ")) #| (pathToMM + " -AlN")).!!
+        val result:String = Futures.awaitAll(50000,Futures.future { proc.exitValue() }).head  match {
+            case Some(0) => buffer.toString
+            case _ => LOG.error("UmlsEnhancer timed out!");proc.destroy();""
+        }
 
         result
     }

@@ -70,5 +70,5 @@ object AnnotatedText {
         assert(tokens.size == 2)
     }
 
-    def cleanText(text:String) = text.replaceAll("’", "'").replaceAll("([^\\s])(:)([^\\s])","$1 $2 $3").replaceAll(" ( )+"," ")
+    def cleanText(text:String) = text.replaceAll("’", "'").replaceAll("–","-").replaceAll("([^\\s])(:)([^\\s])","$1 $2 $3").replaceAll(" ( )+"," ")
 }

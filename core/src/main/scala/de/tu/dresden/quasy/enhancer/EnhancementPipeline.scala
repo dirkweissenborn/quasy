@@ -13,8 +13,7 @@ import java.util.Properties
 import regex.RegexAcronymEnhancer
 import stanford.FullStanfordNlpEnhancer
 import gopubmed.GopubmedAnnotator
-import de.tu.dresden.quasy.enhancer.umls.UmlsEnhancer
-import sys.process._
+
 
 /**
  * @author dirk
@@ -82,6 +81,7 @@ class EnhancementPipeline(val enhancers:List[TextEnhancer]) {
                             val text = Futures.awaitAll(60000,future._2).head.asInstanceOf[Option[AnnotatedText]] match {
                                 case None => {
                                     LOG.warn("Annotation timed out for annotator: "+enhancer.getClass.getSimpleName+" on text: "+future._1.text)
+                                    enhancer.start()
                                     future._1
                                 }
                                 case Some(t) => t
